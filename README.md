@@ -25,7 +25,7 @@ Em desenvolvimento — projeto de portfólio construído etapa a etapa.
 - [ ] Exibir lista de transações
 - [ ] Calcular saldo automaticamente
 - [ ] Remover transações
-- [ ] Persistir dados com localStorage
+- [ ] Persistir dados com firebase
 - [ ] Filtro por tipo (entrada/saída)
 - [ ] Interface responsiva
 
