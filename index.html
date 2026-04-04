@@ -6,103 +6,137 @@
     <title>Controle Financeiro Inteligente</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
 
-    <header class="cabecalho">
-      <div class="cabecalho__conteudo">
-        <div class="cabecalho__logo">
-          <span class="cabecalho__icone">◈</span>
-          <h1 class="cabecalho__titulo">Controle Financeiro</h1>
+
+    <div class="tela-auth" id="tela-auth">
+      <div class="auth-card">
+        <div class="auth-logo">
+          <span class="auth-logo__icone">◈</span>
+          <h1 class="auth-logo__titulo">Controle Financeiro</h1>
+          <p class="auth-logo__sub">Inteligente</p>
         </div>
-        <p class="cabecalho__subtitulo">Inteligente</p>
-      </div>
-    </header>
 
-    <main class="principal">
-
-
-      <section class="resumo" aria-label="Resumo financeiro">
-        <div class="card card--saldo">
-          <span class="card__rotulo">Saldo Total</span>
-          <strong class="card__valor" id="saldo-total">R$ 0,00</strong>
+        <div class="auth-abas">
+          <button class="auth-aba auth-aba--ativa" id="aba-login" onclick="trocarAba('login')">Entrar</button>
+          <button class="auth-aba" id="aba-cadastro" onclick="trocarAba('cadastro')">Criar conta</button>
         </div>
-        <div class="card card--entradas">
-          <span class="card__rotulo">Entradas</span>
-          <strong class="card__valor" id="total-entradas">R$ 0,00</strong>
-        </div>
-        <div class="card card--saidas">
-          <span class="card__rotulo">Saídas</span>
-          <strong class="card__valor" id="total-saidas">R$ 0,00</strong>
-        </div>
-      </section>
 
 
-      <section class="secao-formulario" aria-label="Nova transação">
-        <h2 class="secao__titulo">Nova Transação</h2>
-        <form class="formulario" id="formulario-transacao" novalidate>
+        <form class="auth-form" id="form-login" novalidate>
           <div class="formulario__grupo">
-            <label class="formulario__label" for="descricao">Descrição</label>
-            <input
-              class="formulario__input"
-              type="text"
-              id="descricao"
-              placeholder="Ex: Salário, Aluguel..."
-              autocomplete="off"
-              required
-            />
+            <label class="formulario__label" for="login-email">E-mail</label>
+            <input class="formulario__input" type="email" id="login-email" placeholder="seu@email.com" required />
           </div>
           <div class="formulario__grupo">
-            <label class="formulario__label" for="valor">Valor (R$)</label>
-            <input
-              class="formulario__input"
-              type="number"
-              id="valor"
-              placeholder="0,00"
-              step="0.01"
-              min="0.01"
-              required
-            />
+            <label class="formulario__label" for="login-senha">Senha</label>
+            <input class="formulario__input" type="password" id="login-senha" placeholder="••••••••" required />
           </div>
-          <div class="formulario__grupo">
-            <label class="formulario__label">Tipo</label>
-            <div class="formulario__tipo">
-              <label class="tipo-opcao tipo-opcao--entrada">
-                <input type="radio" name="tipo" value="entrada" required />
-                <span>↑ Entrada</span>
-              </label>
-              <label class="tipo-opcao tipo-opcao--saida">
-                <input type="radio" name="tipo" value="saida" />
-                <span>↓ Saída</span>
-              </label>
-            </div>
-          </div>
-          <button class="botao-primario" type="submit">Adicionar Transação</button>
+          <p class="auth-erro" id="erro-login"></p>
+          <button class="botao-primario" type="submit" id="btn-login">Entrar</button>
         </form>
-      </section>
 
 
-      <section class="secao-lista" aria-label="Histórico de transações">
-        <h2 class="secao__titulo">Histórico</h2>
-        <ul class="lista-transacoes" id="lista-transacoes">
+        <form class="auth-form auth-form--escondido" id="form-cadastro" novalidate>
+          <div class="formulario__grupo">
+            <label class="formulario__label" for="cadastro-nome">Nome</label>
+            <input class="formulario__input" type="text" id="cadastro-nome" placeholder="Seu nome" required />
+          </div>
+          <div class="formulario__grupo">
+            <label class="formulario__label" for="cadastro-email">E-mail</label>
+            <input class="formulario__input" type="email" id="cadastro-email" placeholder="seu@email.com" required />
+          </div>
+          <div class="formulario__grupo">
+            <label class="formulario__label" for="cadastro-senha">Senha</label>
+            <input class="formulario__input" type="password" id="cadastro-senha" placeholder="mínimo 6 caracteres" required />
+          </div>
+          <p class="auth-erro" id="erro-cadastro"></p>
+          <button class="botao-primario" type="submit" id="btn-cadastro">Criar conta</button>
+        </form>
+      </div>
+    </div>
 
-          <li class="lista-transacoes__vazia">
-            Nenhuma transação ainda. Adicione uma acima. ✦
-          </li>
-        </ul>
-      </section>
 
-    </main>
+    <div class="app-principal app-principal--escondido" id="app-principal">
 
-    <footer class="rodape">
-      <p>Controle Financeiro Inteligente &mdash; Feito com JavaScript/p>
-    </footer>
+      <header class="cabecalho">
+        <div class="cabecalho__conteudo">
+          <div class="cabecalho__logo">
+            <span class="cabecalho__icone">◈</span>
+            <h1 class="cabecalho__titulo">Controle Financeiro</h1>
+            <p class="cabecalho__subtitulo">Inteligente</p>
+          </div>
+          <div class="cabecalho__usuario">
+            <span class="usuario-nome" id="usuario-nome"></span>
+            <button class="botao-sair" id="btn-sair" onclick="sair()">Sair</button>
+          </div>
+        </div>
+      </header>
 
-    <script src="script.js"></script>
+      <main class="principal">
+
+        <section class="resumo" aria-label="Resumo financeiro">
+          <div class="card card--saldo" id="card-saldo">
+            <span class="card__rotulo">Saldo Total</span>
+            <strong class="card__valor" id="saldo-total">R$ 0,00</strong>
+          </div>
+          <div class="card card--entradas">
+            <span class="card__rotulo">Entradas</span>
+            <strong class="card__valor" id="total-entradas">R$ 0,00</strong>
+          </div>
+          <div class="card card--saidas">
+            <span class="card__rotulo">Saídas</span>
+            <strong class="card__valor" id="total-saidas">R$ 0,00</strong>
+          </div>
+        </section>
+
+        <section class="secao-formulario" aria-label="Nova transação">
+          <h2 class="secao__titulo">Nova Transação</h2>
+          <form class="formulario" id="formulario-transacao" novalidate>
+            <div class="formulario__grupo">
+              <label class="formulario__label" for="descricao">Descrição</label>
+              <input class="formulario__input" type="text" id="descricao" placeholder="Ex: Salário, Aluguel..." autocomplete="off" required />
+            </div>
+            <div class="formulario__grupo">
+              <label class="formulario__label" for="valor">Valor (R$)</label>
+              <input class="formulario__input" type="number" id="valor" placeholder="0,00" step="0.01" min="0.01" required />
+            </div>
+            <div class="formulario__grupo">
+              <label class="formulario__label">Tipo</label>
+              <div class="formulario__tipo">
+                <label class="tipo-opcao tipo-opcao--entrada">
+                  <input type="radio" name="tipo" value="entrada" required />
+                  <span>↑ Entrada</span>
+                </label>
+                <label class="tipo-opcao tipo-opcao--saida">
+                  <input type="radio" name="tipo" value="saida" />
+                  <span>↓ Saída</span>
+                </label>
+              </div>
+            </div>
+            <button class="botao-primario" type="submit" id="btn-adicionar">Adicionar Transação</button>
+          </form>
+        </section>
+
+        <section class="secao-lista" aria-label="Histórico de transações">
+          <h2 class="secao__titulo">Histórico</h2>
+          <ul class="lista-transacoes" id="lista-transacoes">
+            <li class="lista-transacoes__vazia">Nenhuma transação ainda. Adicione uma acima. ✦</li>
+          </ul>
+        </section>
+
+      </main>
+
+      <footer class="rodape">
+        <p>Controle Financeiro Inteligente &mdash; Feito com JavaScript puro + Firebase</p>
+      </footer>
+
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module" src="script.js"></script>
   </body>
 </html>

@@ -37,7 +37,7 @@ git clone https://github.com/miniLaura/controle-financeiro.git
 
 ## 📸 Preview
 
-> *(print aqui após o deploy)*
+> ![alt text](image.png)
 
 ---
 
