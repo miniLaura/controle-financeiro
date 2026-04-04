@@ -33,20 +33,12 @@ Em desenvolvimento — projeto de portfólio construído etapa a etapa.
 
 ## 🚀 Como executar
 
-```bash
-# Clone o repositório
-git clone https://github.com/SEU_USUARIO/controle-financeiro.git
-
-# Abra o arquivo index.html no navegador
-# Não é necessário servidor — funciona direto no browser.
-```
-
----
+git clone https://github.com/miniLaura/controle-financeiro.git
 
 ## 📸 Preview
 
-> *(adicionar print aqui após o deploy)*
+> *(print aqui após o deploy)*
 
 ---
 
-Desenvolvido por [seu nome] como projeto de portfólio.
+Desenvolvido por Laura Neves como projeto de portfólio.
