@@ -1,6 +1,6 @@
 # ◈ Controle Financeiro Inteligente
 
-> Aplicação web de controle financeiro pessoal desenvolvida com JavaScript puro, HTML semântico e CSS moderno.
+> Aplicação web de controle financeiro pessoal desenvolvida com JavaScript, HTML semântico e CSS moderno.
 
 ---
 
