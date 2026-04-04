@@ -1,0 +1,498 @@
+/* ============================================================
+   DESIGN SYSTEM — Variáveis globais
+   Centralizar cores, fontes e espaçamentos aqui facilita
+   manutenção e futuras mudanças de tema.
+   ============================================================ */
+:root {
+  /* Cores principais */
+  --cor-fundo:         #0f1117;
+  --cor-superficie:    #1a1d27;
+  --cor-superficie-2:  #22263a;
+  --cor-borda:         #2e3350;
+
+  /* Acento e semântica */
+  --cor-acento:        #00d97e;
+  --cor-acento-suave:  rgba(0, 217, 126, 0.12);
+  --cor-entrada:       #00d97e;
+  --cor-entrada-suave: rgba(0, 217, 126, 0.10);
+  --cor-saida:         #ff5c7a;
+  --cor-saida-suave:   rgba(255, 92, 122, 0.10);
+
+  /* Tipografia */
+  --cor-texto:         #e8eaf2;
+  --cor-texto-suave:   #7b82a3;
+  --fonte-principal:   'Sora', sans-serif;
+
+  /* Espaçamentos */
+  --espaco-xs: 0.4rem;
+  --espaco-sm: 0.75rem;
+  --espaco-md: 1.25rem;
+  --espaco-lg: 2rem;
+  --espaco-xl: 3rem;
+
+  /* Bordas */
+  --raio-sm: 8px;
+  --raio-md: 14px;
+  --raio-lg: 20px;
+
+  /* Sombras */
+  --sombra-card: 0 4px 24px rgba(0, 0, 0, 0.35);
+  --sombra-acento: 0 0 20px rgba(0, 217, 126, 0.15);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--fonte-principal);
+  background-color: var(--cor-fundo);
+  color: var(--cor-texto);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+ul {
+  list-style: none;
+}
+
+input, button {
+  font-family: inherit;
+}
+
+/* ============================================================
+   CABEÇALHO
+   ============================================================ */
+.cabecalho {
+  background-color: var(--cor-superficie);
+  border-bottom: 1px solid var(--cor-borda);
+  padding: var(--espaco-md) var(--espaco-lg);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+
+.cabecalho__conteudo {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  align-items: baseline;
+  gap: var(--espaco-sm);
+}
+
+.cabecalho__logo {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-xs);
+}
+
+.cabecalho__icone {
+  color: var(--cor-acento);
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.cabecalho__titulo {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--cor-texto);
+}
+
+.cabecalho__subtitulo {
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: var(--cor-acento);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ============================================================
+   ÁREA PRINCIPAL
+   ============================================================ */
+.principal {
+  flex: 1;
+  max-width: 860px;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--espaco-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-lg);
+}
+
+/* ============================================================
+   CARDS DE RESUMO
+   ============================================================ */
+.resumo {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--espaco-md);
+}
+
+.card {
+  background-color: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-md);
+  padding: var(--espaco-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-xs);
+  box-shadow: var(--sombra-card);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+.card__rotulo {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--cor-texto-suave);
+}
+
+.card__valor {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+/* Variantes dos cards */
+.card--saldo {
+  border-top: 3px solid var(--cor-acento);
+  box-shadow: var(--sombra-card), var(--sombra-acento);
+}
+
+.card--saldo .card__valor {
+  color: var(--cor-acento);
+}
+
+.card--entradas {
+  border-top: 3px solid var(--cor-entrada);
+}
+
+.card--entradas .card__valor {
+  color: var(--cor-entrada);
+}
+
+.card--saidas {
+  border-top: 3px solid var(--cor-saida);
+}
+
+.card--saidas .card__valor {
+  color: var(--cor-saida);
+}
+
+/* Estado: saldo negativo */
+.card--saldo.saldo-negativo {
+  border-top-color: var(--cor-saida);
+  box-shadow: var(--sombra-card), 0 0 20px rgba(255, 92, 122, 0.15);
+}
+
+.card--saldo.saldo-negativo .card__valor {
+  color: var(--cor-saida);
+}
+
+/* ============================================================
+   TÍTULO DE SEÇÃO
+   ============================================================ */
+.secao__titulo {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--cor-texto-suave);
+  margin-bottom: var(--espaco-md);
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+}
+
+.secao__titulo::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--cor-borda);
+}
+
+/* ============================================================
+   FORMULÁRIO
+   ============================================================ */
+.secao-formulario {
+  background-color: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-lg);
+  padding: var(--espaco-lg);
+  box-shadow: var(--sombra-card);
+}
+
+.formulario {
+  display: grid;
+  gap: var(--espaco-md);
+}
+
+.formulario__grupo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-xs);
+}
+
+.formulario__label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--cor-texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.formulario__input {
+  background-color: var(--cor-fundo);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-sm);
+  padding: var(--espaco-sm) var(--espaco-md);
+  color: var(--cor-texto);
+  font-size: 0.95rem;
+  font-weight: 400;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+  width: 100%;
+}
+
+.formulario__input::placeholder {
+  color: var(--cor-texto-suave);
+  opacity: 0.6;
+}
+
+.formulario__input:focus {
+  border-color: var(--cor-acento);
+  box-shadow: 0 0 0 3px var(--cor-acento-suave);
+}
+
+/* Remove seta dos inputs number */
+.formulario__input[type='number']::-webkit-inner-spin-button,
+.formulario__input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+}
+
+/* Radio buttons — tipo de transação */
+.formulario__tipo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--espaco-sm);
+}
+
+.tipo-opcao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espaco-xs);
+  padding: var(--espaco-sm);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-sm);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  background-color: var(--cor-fundo);
+  color: var(--cor-texto-suave);
+}
+
+.tipo-opcao input[type='radio'] {
+  display: none;
+}
+
+.tipo-opcao:hover {
+  border-color: var(--cor-texto-suave);
+  color: var(--cor-texto);
+}
+
+.tipo-opcao--entrada:has(input:checked) {
+  background-color: var(--cor-entrada-suave);
+  border-color: var(--cor-entrada);
+  color: var(--cor-entrada);
+}
+
+.tipo-opcao--saida:has(input:checked) {
+  background-color: var(--cor-saida-suave);
+  border-color: var(--cor-saida);
+  color: var(--cor-saida);
+}
+
+/* ============================================================
+   BOTÃO PRIMÁRIO
+   ============================================================ */
+.botao-primario {
+  background-color: var(--cor-acento);
+  color: #0f1117;
+  border: none;
+  border-radius: var(--raio-sm);
+  padding: var(--espaco-sm) var(--espaco-md);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+  width: 100%;
+}
+
+.botao-primario:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.botao-primario:active {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* ============================================================
+   LISTA DE TRANSAÇÕES
+   ============================================================ */
+.lista-transacoes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-sm);
+}
+
+.lista-transacoes__vazia {
+  text-align: center;
+  color: var(--cor-texto-suave);
+  font-size: 0.9rem;
+  padding: var(--espaco-xl);
+  border: 1px dashed var(--cor-borda);
+  border-radius: var(--raio-md);
+}
+
+/* Item de transação */
+.transacao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-md);
+  padding: var(--espaco-md);
+  gap: var(--espaco-md);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+  animation: entrada-item 0.3s ease forwards;
+}
+
+.transacao:hover {
+  transform: translateX(3px);
+}
+
+.transacao--entrada {
+  border-left: 3px solid var(--cor-entrada);
+}
+
+.transacao--saida {
+  border-left: 3px solid var(--cor-saida);
+}
+
+.transacao__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.transacao__descricao {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--cor-texto);
+}
+
+.transacao__data {
+  font-size: 0.75rem;
+  color: var(--cor-texto-suave);
+}
+
+.transacao__valor {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.transacao--entrada .transacao__valor {
+  color: var(--cor-entrada);
+}
+
+.transacao--saida .transacao__valor {
+  color: var(--cor-saida);
+}
+
+.transacao__remover {
+  background: none;
+  border: none;
+  color: var(--cor-texto-suave);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: var(--espaco-xs);
+  border-radius: var(--raio-sm);
+  transition: color 0.2s ease, background-color 0.2s ease;
+  line-height: 1;
+}
+
+.transacao__remover:hover {
+  color: var(--cor-saida);
+  background-color: var(--cor-saida-suave);
+}
+
+/* ============================================================
+   ANIMAÇÕES
+   ============================================================ */
+@keyframes entrada-item {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================
+   RODAPÉ
+   ============================================================ */
+.rodape {
+  text-align: center;
+  padding: var(--espaco-lg);
+  font-size: 0.75rem;
+  color: var(--cor-texto-suave);
+  border-top: 1px solid var(--cor-borda);
+}
+
+/* ============================================================
+   RESPONSIVIDADE
+   ============================================================ */
+@media (max-width: 640px) {
+  .principal {
+    padding: var(--espaco-md);
+  }
+
+  .resumo {
+    grid-template-columns: 1fr;
+  }
+
+  .card__valor {
+    font-size: 1.3rem;
+  }
+}

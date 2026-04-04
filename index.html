@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Controle Financeiro Inteligente</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+
+    <header class="cabecalho">
+      <div class="cabecalho__conteudo">
+        <div class="cabecalho__logo">
+          <span class="cabecalho__icone">◈</span>
+          <h1 class="cabecalho__titulo">Controle Financeiro</h1>
+        </div>
+        <p class="cabecalho__subtitulo">Inteligente</p>
+      </div>
+    </header>
+
+    <main class="principal">
+
+      <!-- Seção: Cards de resumo -->
+      <section class="resumo" aria-label="Resumo financeiro">
+        <div class="card card--saldo">
+          <span class="card__rotulo">Saldo Total</span>
+          <strong class="card__valor" id="saldo-total">R$ 0,00</strong>
+        </div>
+        <div class="card card--entradas">
+          <span class="card__rotulo">Entradas</span>
+          <strong class="card__valor" id="total-entradas">R$ 0,00</strong>
+        </div>
+        <div class="card card--saidas">
+          <span class="card__rotulo">Saídas</span>
+          <strong class="card__valor" id="total-saidas">R$ 0,00</strong>
+        </div>
+      </section>
+
+      <!-- Seção: Formulário de nova transação -->
+      <section class="secao-formulario" aria-label="Nova transação">
+        <h2 class="secao__titulo">Nova Transação</h2>
+        <form class="formulario" id="formulario-transacao" novalidate>
+          <div class="formulario__grupo">
+            <label class="formulario__label" for="descricao">Descrição</label>
+            <input
+              class="formulario__input"
+              type="text"
+              id="descricao"
+              placeholder="Ex: Salário, Aluguel..."
+              autocomplete="off"
+              required
+            />
+          </div>
+          <div class="formulario__grupo">
+            <label class="formulario__label" for="valor">Valor (R$)</label>
+            <input
+              class="formulario__input"
+              type="number"
+              id="valor"
+              placeholder="0,00"
+              step="0.01"
+              min="0.01"
+              required
+            />
+          </div>
+          <div class="formulario__grupo">
+            <label class="formulario__label">Tipo</label>
+            <div class="formulario__tipo">
+              <label class="tipo-opcao tipo-opcao--entrada">
+                <input type="radio" name="tipo" value="entrada" required />
+                <span>↑ Entrada</span>
+              </label>
+              <label class="tipo-opcao tipo-opcao--saida">
+                <input type="radio" name="tipo" value="saida" />
+                <span>↓ Saída</span>
+              </label>
+            </div>
+          </div>
+          <button class="botao-primario" type="submit">Adicionar Transação</button>
+        </form>
+      </section>
+
+      <!-- Seção: Lista de transações -->
+      <section class="secao-lista" aria-label="Histórico de transações">
+        <h2 class="secao__titulo">Histórico</h2>
+        <ul class="lista-transacoes" id="lista-transacoes">
+          <!-- Itens inseridos via JavaScript -->
+          <li class="lista-transacoes__vazia">
+            Nenhuma transação ainda. Adicione uma acima. ✦
+          </li>
+        </ul>
+      </section>
+
+    </main>
+
+    <footer class="rodape">
+      <p>Controle Financeiro Inteligente &mdash; Feito com JavaScript puro</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
