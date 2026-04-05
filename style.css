@@ -1,3 +1,4 @@
+
 :root {
   --cor-fundo:         #0f1117;
   --cor-superficie:    #1a1d27;
@@ -32,9 +33,9 @@ body { font-family: var(--fonte-principal); background-color: var(--cor-fundo); 
 ul { list-style: none; }
 input, button { font-family: inherit; }
 
-
 .tela { min-height: 100vh; display: flex; flex-direction: column; }
 .tela--escondida { display: none !important; }
+
 
 #tela-auth { align-items: center; justify-content: center; padding: var(--espaco-md); }
 .auth-card { background: var(--cor-superficie); border: 1px solid var(--cor-borda); border-radius: var(--raio-lg); padding: var(--espaco-xl) var(--espaco-lg); width: 100%; max-width: 420px; box-shadow: var(--sombra-card); }
@@ -48,7 +49,6 @@ input, button { font-family: inherit; }
 .auth-form { display: flex; flex-direction: column; gap: var(--espaco-md); }
 .auth-form--escondido { display: none; }
 .auth-erro { color: var(--cor-saida); font-size: 0.8rem; min-height: 1rem; text-align: center; }
-
 
 .cabecalho { background: var(--cor-superficie); border-bottom: 1px solid var(--cor-borda); padding: var(--espaco-md) var(--espaco-lg); position: sticky; top: 0; z-index: 100; }
 .cabecalho__conteudo { max-width: 860px; margin: 0 auto; display: flex; align-items: center; gap: var(--espaco-sm); }
@@ -79,7 +79,6 @@ input, button { font-family: inherit; }
 .card--saidas .card__valor { color: var(--cor-saida); }
 .card--saldo.saldo-negativo { border-top-color: var(--cor-saida); box-shadow: var(--sombra-card), 0 0 20px rgba(255,92,122,.15); }
 .card--saldo.saldo-negativo .card__valor { color: var(--cor-saida); }
-
 
 .secao__titulo { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--cor-texto-suave); margin-bottom: var(--espaco-md); display: flex; align-items: center; gap: var(--espaco-sm); }
 .secao__titulo::after { content: ''; flex: 1; height: 1px; background: var(--cor-borda); }
@@ -156,7 +155,6 @@ input, button { font-family: inherit; }
 .transacao__btn--abater:hover { color: var(--cor-alerta); background: var(--cor-alerta-suave); border-color: var(--cor-alerta); }
 .transacao__btn--remover:hover { color: var(--cor-saida); background: var(--cor-saida-suave); border-color: var(--cor-saida); }
 
-
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 200; padding: var(--espaco-md); backdrop-filter: blur(4px); }
 .modal-overlay--escondida { display: none !important; }
 .modal { background: var(--cor-superficie); border: 1px solid var(--cor-borda); border-radius: var(--raio-lg); width: 100%; max-width: 460px; box-shadow: 0 8px 40px rgba(0,0,0,0.5); }
@@ -187,3 +185,88 @@ input, button { font-family: inherit; }
   .grid-meses { grid-template-columns: 1fr; }
 }
 
+
+.ver-mais-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--espaco-md);
+}
+
+.botao-ver-mais {
+  background: none;
+  border: 1px solid var(--cor-borda);
+  color: var(--cor-texto-suave);
+  border-radius: var(--raio-sm);
+  padding: var(--espaco-sm) var(--espaco-lg);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--fonte-principal);
+}
+
+.botao-ver-mais:hover {
+  border-color: var(--cor-acento);
+  color: var(--cor-acento);
+}
+
+
+.formulario__botoes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--espaco-sm);
+}
+
+@media (max-width: 640px) {
+  .formulario__botoes {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.modal--largo {
+  max-width: 560px;
+}
+
+
+.lista-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.checkbox-mes {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-sm);
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+  transition: all 0.2s;
+  background: var(--cor-fundo);
+}
+
+.checkbox-mes:hover {
+  border-color: var(--cor-acento);
+  color: var(--cor-texto);
+}
+
+.checkbox-mes input[type="checkbox"] {
+  accent-color: var(--cor-acento);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.checkbox-mes:has(input:checked) {
+  background: var(--cor-acento-suave);
+  border-color: var(--cor-acento);
+  color: var(--cor-acento);
+}

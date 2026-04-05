@@ -4,8 +4,9 @@ import {
   signOut, onAuthStateChanged, updateProfile,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
-  getFirestore, collection, addDoc, deleteDoc, updateDoc,
-  doc, onSnapshot, query, orderBy, getDocs, getDoc,
+  getFirestore, collection, addDoc, deleteDoc, updateDoc, setDoc,
+  doc, onSnapshot, query, orderBy, getDocs, limit, startAfter,
+  serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 'use strict';
@@ -25,23 +26,29 @@ const auth = getAuth(app);
 const db   = getFirestore(app);
 
 
+const MESES_POR_PAGINA = 10;
+
 const estado = {
-  usuarioAtual:      null,
-  mesAtualId:        null,
-  mesAtualNome:      null,
-  transacoes:        [],
-  unsubTransacoes:   null, 
-  unsubMeses:        null, 
-  transacaoAbatendo: null,
-  
-}
+  usuarioAtual:        null,
+  mesAtualId:          null,
+  mesAtualNome:        null,
+  transacoes:          [],
+  ultimoDocMes:        null,
+
+  unsubTransacoes:     null,
+  unsubMeses:          null,
+  unsubListenersMeses: {},  
+
+  transacaoAbatendo:   null,
+
+  mesesDisponiveis:    [], 
+};
+
 
 const el = {
-  // Telas
   telaAuth:        document.getElementById('tela-auth'),
   telaMeses:       document.getElementById('tela-meses'),
   telaLancamentos: document.getElementById('tela-lancamentos'),
-  // Auth
   formLogin:       document.getElementById('form-login'),
   formCadastro:    document.getElementById('form-cadastro'),
   loginEmail:      document.getElementById('login-email'),
@@ -51,13 +58,12 @@ const el = {
   cadastroEmail:   document.getElementById('cadastro-email'),
   cadastroSenha:   document.getElementById('cadastro-senha'),
   erroCadastro:    document.getElementById('erro-cadastro'),
-  // Meses
   usuarioNome:     document.getElementById('usuario-nome'),
   usuarioNome2:    document.getElementById('usuario-nome-2'),
   formNovoMes:     document.getElementById('form-novo-mes'),
   nomeMes:         document.getElementById('nome-mes'),
   gridMeses:       document.getElementById('grid-meses'),
-  // Lançamentos
+  btnVerMais:      document.getElementById('btn-ver-mais'),
   tituloMesAtual:  document.getElementById('titulo-mes-atual'),
   formTransacao:   document.getElementById('formulario-transacao'),
   descricao:       document.getElementById('descricao'),
@@ -67,20 +73,25 @@ const el = {
   totalEntradas:   document.getElementById('total-entradas'),
   totalSaidas:     document.getElementById('total-saidas'),
   cardSaldo:       document.getElementById('card-saldo'),
-  // Modal
   modalAbatimento: document.getElementById('modal-abatimento'),
   modalInfo:       document.getElementById('modal-info-transacao'),
   valorAbatimento: document.getElementById('valor-abatimento'),
   descAbatimento:  document.getElementById('descricao-abatimento'),
   erroAbatimento:  document.getElementById('erro-abatimento'),
   modalHistorico:  document.getElementById('modal-historico'),
+  // Multi-mês
+  btnMultiMes:     document.getElementById('btn-multi-mes'),
+  modalMultiMes:   document.getElementById('modal-multi-mes'),
+  listaMultiMes:   document.getElementById('lista-multi-mes'),
+  erroMultiMes:    document.getElementById('erro-multi-mes'),
+  descMultiMes:    document.getElementById('desc-multi-mes'),
+  valorMultiMes:   document.getElementById('valor-multi-mes'),
 };
 
 
 function fmt(valor) {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
-
 
 function traduzirErro(codigo) {
   const erros = {
@@ -97,6 +108,7 @@ function traduzirErro(codigo) {
 
 function setCarregando(btnId, carregando, textoOriginal) {
   const btn = document.getElementById(btnId);
+  if (!btn) return;
   btn.disabled = carregando;
   btn.classList.toggle('botao-primario--carregando', carregando);
   btn.textContent = carregando ? 'Aguarde...' : textoOriginal;
@@ -104,8 +116,8 @@ function setCarregando(btnId, carregando, textoOriginal) {
 
 
 function mostrarTela(id) {
-  ['tela-auth', 'tela-meses', 'tela-lancamentos'].forEach((telaId) => {
-    document.getElementById(telaId).classList.toggle('tela--escondida', telaId !== id);
+  ['tela-auth', 'tela-meses', 'tela-lancamentos'].forEach(t => {
+    document.getElementById(t).classList.toggle('tela--escondida', t !== id);
   });
 }
 
@@ -115,7 +127,7 @@ window.trocarAba = function(aba) {
   document.getElementById('aba-cadastro').classList.toggle('auth-aba--ativa', aba === 'cadastro');
   document.getElementById('form-login').classList.toggle('auth-form--escondido', aba !== 'login');
   document.getElementById('form-cadastro').classList.toggle('auth-form--escondido', aba !== 'cadastro');
-  el.erroLogin.textContent = '';
+  el.erroLogin.textContent    = '';
   el.erroCadastro.textContent = '';
 };
 
@@ -125,8 +137,8 @@ el.formLogin.addEventListener('submit', async (e) => {
   setCarregando('btn-login', true, 'Entrar');
   try {
     await signInWithEmailAndPassword(auth, el.loginEmail.value.trim(), el.loginSenha.value);
-  } catch (erro) {
-    el.erroLogin.textContent = traduzirErro(erro.code);
+  } catch (err) {
+    el.erroLogin.textContent = traduzirErro(err.code);
     setCarregando('btn-login', false, 'Entrar');
   }
 });
@@ -142,47 +154,122 @@ el.formCadastro.addEventListener('submit', async (e) => {
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, senha);
     await updateProfile(cred.user, { displayName: nome });
-  } catch (erro) {
-    el.erroCadastro.textContent = traduzirErro(erro.code);
+  } catch (err) {
+    el.erroCadastro.textContent = traduzirErro(err.code);
     setCarregando('btn-cadastro', false, 'Criar conta');
   }
 });
 
 window.sair = async function() {
-  if (estado.unsubTransacoes) estado.unsubTransacoes();
-  if (estado.unsubMeses)      estado.unsubMeses();
-  estado.transacoes  = [];
-  estado.mesAtualId  = null;
+  cancelarTodosListeners();
   await signOut(auth);
 };
 
-
-function colMeses(uid)        { return collection(db, 'usuarios', uid, 'meses'); }
-function colTransacoes(uid, mesId) { return collection(db, 'usuarios', uid, 'meses', mesId, 'transacoes'); }
-function colAbatimentos(uid, mesId, transacaoId) {
-  return collection(db, 'usuarios', uid, 'meses', mesId, 'transacoes', transacaoId, 'abatimentos');
+function cancelarTodosListeners() {
+  if (estado.unsubTransacoes) { estado.unsubTransacoes(); estado.unsubTransacoes = null; }
+  if (estado.unsubMeses)      { estado.unsubMeses();      estado.unsubMeses = null; }
+  Object.values(estado.unsubListenersMeses).forEach(fn => fn());
+  estado.unsubListenersMeses = {};
+  estado.transacoes          = [];
+  estado.mesesCarregados     = [];
+  estado.ultimoDocMes        = null;
 }
+
+
+const colMeses       = (uid)                     => collection(db, 'usuarios', uid, 'meses');
+const colTransacoes  = (uid, mesId)              => collection(db, 'usuarios', uid, 'meses', mesId, 'transacoes');
+const colAbatimentos = (uid, mesId, transacaoId) => collection(db, 'usuarios', uid, 'meses', mesId, 'transacoes', transacaoId, 'abatimentos');
+const docMes         = (uid, mesId)              => doc(db, 'usuarios', uid, 'meses', mesId);
 
 
 function escutarMeses(uid) {
-  const q = query(colMeses(uid), orderBy('criadoEm', 'desc'));
-  estado.unsubMeses = onSnapshot(q, async (snapshot) => {
-    const meses = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    await renderizarGridMeses(meses, uid);
+  if (estado.unsubMeses) estado.unsubMeses();
+
+  estado.mesesCarregados      = [];
+  estado.ultimoDocMes         = null;
+  estado.totalMesesCarregados = 0;
+
+
+  const q = query(
+    colMeses(uid),
+    orderBy('ultimaEdicao', 'desc'),
+    limit(MESES_POR_PAGINA)
+  );
+
+  estado.unsubMeses = onSnapshot(q, (snapshot) => {
+
+    estado.mesesCarregados = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    estado.ultimoDocMes    = snapshot.docs[snapshot.docs.length - 1] || null;
+
+
+    estado.mesesDisponiveis = [...estado.mesesCarregados];
+
+    renderizarGridMeses();
+    atualizarBotaoVerMais(snapshot.docs.length);
   });
 }
 
 
-async function calcularTotaisMes(uid, mesId) {
-  const snapshot = await getDocs(colTransacoes(uid, mesId));
-  let entradas = 0, saidas = 0;
-  snapshot.forEach(d => {
-    const t = d.data();
-    const valorRestante = t.valorRestante !== undefined ? t.valorRestante : t.valor;
-    if (t.tipo === 'entrada') entradas += valorRestante;
-    else                      saidas   += valorRestante;
+window.carregarMaisMeses = async function() {
+  if (!estado.ultimoDocMes) return;
+  const uid = estado.usuarioAtual.uid;
+  setCarregando('btn-ver-mais', true, 'Ver mais');
+
+  const q = query(
+    colMeses(uid),
+    orderBy('ultimaEdicao', 'desc'),
+    limit(MESES_POR_PAGINA),
+    startAfter(estado.ultimoDocMes)
+  );
+
+  const snap = await getDocs(q);
+  const novosMeses = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  estado.mesesCarregados = [...estado.mesesCarregados, ...novosMeses];
+  estado.ultimoDocMes    = snap.docs[snap.docs.length - 1] || null;
+  estado.mesesDisponiveis = [...estado.mesesCarregados];
+
+  renderizarGridMeses();
+  atualizarBotaoVerMais(snap.docs.length);
+  setCarregando('btn-ver-mais', false, 'Ver mais');
+};
+
+function atualizarBotaoVerMais(qtdRetornada) {
+  el.btnVerMais.style.display = qtdRetornada >= MESES_POR_PAGINA ? 'block' : 'none';
+}
+
+
+const cacheTotais = {};
+
+
+function escutarTotaisMes(uid, mesId) {
+  if (estado.unsubListenersMeses[mesId]) return;
+
+  const q = query(colTransacoes(uid, mesId), orderBy('criadoEm', 'desc'));
+
+  estado.unsubListenersMeses[mesId] = onSnapshot(q, (snap) => {
+    let entradas = 0, saidas = 0;
+    snap.forEach(d => {
+      const t = d.data();
+      const v = t.valorRestante !== undefined ? t.valorRestante : t.valor;
+      if (t.tipo === 'entrada') entradas += v;
+      else                      saidas   += v;
+    });
+    cacheTotais[mesId] = { entradas, saidas, saldo: entradas - saidas };
+
+    atualizarCardMes(mesId);
   });
-  return { entradas, saidas, saldo: entradas - saidas };
+}
+
+function atualizarCardMes(mesId) {
+  const card = document.querySelector(`[data-mes-id="${mesId}"]`);
+  if (!card) return;
+
+  const mes    = estado.mesesCarregados.find(m => m.id === mesId);
+  if (!mes) return;
+
+  const totais = cacheTotais[mesId] || { entradas: 0, saidas: 0, saldo: 0 };
+  card.outerHTML = htmlCardMes(mes, totais);
 }
 
 
@@ -193,54 +280,80 @@ function statusMes(saldo, entradas) {
   return 'critico';
 }
 
-async function renderizarGridMeses(meses, uid) {
-  if (meses.length === 0) {
+function htmlCardMes(mes, totais) {
+  const { entradas, saidas, saldo } = totais;
+  const status = statusMes(saldo, entradas);
+  const badges = {
+    positivo: '<span class="card-mes__badge badge--positivo">● Positivo</span>',
+    atencao:  '<span class="card-mes__badge badge--atencao">● Atenção</span>',
+    critico:  '<span class="card-mes__badge badge--critico">● Crítico</span>',
+    neutro:   '<span class="card-mes__badge badge--neutro">— Sem dados</span>',
+  };
+  return `
+    <div class="card-mes card-mes--${status}" data-mes-id="${mes.id}"
+         onclick="abrirMes('${mes.id}', '${mes.nome.replace(/'/g, "\\'")}')">
+      <div class="card-mes__header">
+        <span class="card-mes__nome">${mes.nome}</span>
+        ${badges[status]}
+      </div>
+      <div class="card-mes__linha">
+        <span>Entradas</span>
+        <span style="color:var(--cor-entrada)">${fmt(entradas)}</span>
+      </div>
+      <div class="card-mes__linha">
+        <span>Saídas</span>
+        <span style="color:var(--cor-saida)">${fmt(saidas)}</span>
+      </div>
+      <div class="card-mes__saldo">${fmt(saldo)}</div>
+      <button class="card-mes__remover"
+        onclick="removerMes(event,'${mes.id}')"
+        title="Remover mês">✕</button>
+    </div>
+  `;
+}
+
+function renderizarGridMeses() {
+  const uid = estado.usuarioAtual?.uid;
+  if (!uid) return;
+
+  if (estado.mesesCarregados.length === 0) {
     el.gridMeses.innerHTML = '<p class="lista-transacoes__vazia">Nenhum mês criado ainda. Crie um acima. ✦</p>';
     return;
   }
 
-
-  const totaisPromises = meses.map(m => calcularTotaisMes(uid, m.id));
-  const totais = await Promise.all(totaisPromises);
-
-  el.gridMeses.innerHTML = meses.map((mes, i) => {
-    const { entradas, saidas, saldo } = totais[i];
-    const status = statusMes(saldo, entradas);
-    const badges = {
-      positivo: '<span class="card-mes__badge badge--positivo">● Positivo</span>',
-      atencao:  '<span class="card-mes__badge badge--atencao">● Atenção</span>',
-      critico:  '<span class="card-mes__badge badge--critico">● Crítico</span>',
-      neutro:   '<span class="card-mes__badge badge--neutro">— Sem dados</span>',
-    };
-    return `
-      <div class="card-mes card-mes--${status}" onclick="abrirMes('${mes.id}', '${mes.nome.replace(/'/g, "\\'")}')">
-        <div class="card-mes__header">
-          <span class="card-mes__nome">${mes.nome}</span>
-          ${badges[status]}
-        </div>
-        <div class="card-mes__linha"><span>Entradas</span><span style="color:var(--cor-entrada)">${fmt(entradas)}</span></div>
-        <div class="card-mes__linha"><span>Saídas</span><span style="color:var(--cor-saida)">${fmt(saidas)}</span></div>
-        <div class="card-mes__saldo">${fmt(saldo)}</div>
-        <button class="card-mes__remover" onclick="removerMes(event,'${mes.id}')" title="Remover mês">✕</button>
-      </div>
-    `;
-  }).join('');
+  el.gridMeses.innerHTML = estado.mesesCarregados
+    .map(mes => {
+      const totais = cacheTotais[mes.id] || { entradas: 0, saidas: 0, saldo: 0 };
+      escutarTotaisMes(uid, mes.id); 
+      return htmlCardMes(mes, totais);
+    })
+    .join('');
 }
+
 
 el.formNovoMes.addEventListener('submit', async (e) => {
   e.preventDefault();
   const nome = el.nomeMes.value.trim();
   if (!nome) return;
   const uid = estado.usuarioAtual.uid;
-  await addDoc(colMeses(uid), { nome, criadoEm: new Date().toISOString() });
+  await addDoc(colMeses(uid), {
+    nome,
+    criadoEm:    new Date().toISOString(),
+    ultimaEdicao: serverTimestamp(), 
+  });
   el.nomeMes.value = '';
 });
 
 window.removerMes = async function(event, mesId) {
-  event.stopPropagation(); 
+  event.stopPropagation();
   if (!confirm('Remover este mês e todas as transações?')) return;
   const uid = estado.usuarioAtual.uid;
-  await deleteDoc(doc(db, 'usuarios', uid, 'meses', mesId));
+  if (estado.unsubListenersMeses[mesId]) {
+    estado.unsubListenersMeses[mesId]();
+    delete estado.unsubListenersMeses[mesId];
+  }
+  delete cacheTotais[mesId];
+  await deleteDoc(docMes(uid, mesId));
 };
 
 window.abrirMes = function(mesId, mesNome) {
@@ -256,21 +369,31 @@ window.voltarParaMeses = function() {
     estado.unsubTransacoes();
     estado.unsubTransacoes = null;
   }
-  estado.mesAtualId  = null;
-  estado.transacoes  = [];
+  estado.mesAtualId = null;
+  estado.transacoes = [];
   mostrarTela('tela-meses');
 };
 
 
 function escutarTransacoes() {
-  const { uid } = estado.usuarioAtual;
-  const mesId   = estado.mesAtualId;
+  if (estado.unsubTransacoes) estado.unsubTransacoes();
+  const { uid }   = estado.usuarioAtual;
+  const mesId     = estado.mesAtualId;
   const q = query(colTransacoes(uid, mesId), orderBy('criadoEm', 'desc'));
 
-  estado.unsubTransacoes = onSnapshot(q, (snapshot) => {
-    estado.transacoes = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+  estado.unsubTransacoes = onSnapshot(q, (snap) => {
+    estado.transacoes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderizarLancamentos();
   });
+}
+
+
+async function salvarTransacaoNoMes(uid, mesId, dados) {
+  await addDoc(colTransacoes(uid, mesId), {
+    ...dados,
+    criadoEm: new Date().toISOString(),
+  });
+  await updateDoc(docMes(uid, mesId), { ultimaEdicao: serverTimestamp() });
 }
 
 el.formTransacao.addEventListener('submit', async (e) => {
@@ -285,20 +408,19 @@ el.formTransacao.addEventListener('submit', async (e) => {
   }
 
   const btn = document.getElementById('btn-adicionar');
-  btn.disabled = true;
+  btn.disabled    = true;
   btn.textContent = 'Salvando...';
 
   const { uid } = estado.usuarioAtual;
-  await addDoc(colTransacoes(uid, estado.mesAtualId), {
+  await salvarTransacaoNoMes(uid, estado.mesAtualId, {
     descricao,
     valor,
-    valorRestante: valor, 
+    valorRestante: valor,
     tipo,
-    criadoEm: new Date().toISOString(),
   });
 
   el.formTransacao.reset();
-  btn.disabled = false;
+  btn.disabled    = false;
   btn.textContent = 'Adicionar Transação';
 });
 
@@ -306,6 +428,61 @@ window.removerTransacao = async function(id) {
   if (!confirm('Remover esta transação?')) return;
   const { uid } = estado.usuarioAtual;
   await deleteDoc(doc(db, 'usuarios', uid, 'meses', estado.mesAtualId, 'transacoes', id));
+  await updateDoc(docMes(uid, estado.mesAtualId), { ultimaEdicao: serverTimestamp() });
+};
+
+
+window.abrirModalMultiMes = function() {
+  el.erroMultiMes.textContent  = '';
+  el.descMultiMes.value        = '';
+  el.valorMultiMes.value       = '';
+  document.querySelectorAll('input[name="tipo-multi"]').forEach(r => r.checked = false);
+
+  if (estado.mesesDisponiveis.length === 0) {
+    el.listaMultiMes.innerHTML = '<p style="color:var(--cor-texto-suave);font-size:.85rem">Nenhum mês disponível.</p>';
+  } else {
+    el.listaMultiMes.innerHTML = estado.mesesDisponiveis.map(m => `
+      <label class="checkbox-mes">
+        <input type="checkbox" name="mes-check" value="${m.id}" data-nome="${m.nome}" />
+        <span>${m.nome}</span>
+      </label>
+    `).join('');
+  }
+
+  el.modalMultiMes.classList.remove('modal-overlay--escondida');
+};
+
+window.fecharModalMultiMes = function() {
+  el.modalMultiMes.classList.add('modal-overlay--escondida');
+};
+
+window.confirmarMultiMes = async function() {
+  el.erroMultiMes.textContent = '';
+
+  const descricao  = el.descMultiMes.value.trim();
+  const valor      = parseFloat(el.valorMultiMes.value);
+  const tipo       = document.querySelector('input[name="tipo-multi"]:checked')?.value;
+  const checkboxes = [...document.querySelectorAll('input[name="mes-check"]:checked')];
+
+  if (!descricao)               { el.erroMultiMes.textContent = 'Informe a descrição.'; return; }
+  if (!valor || valor <= 0)     { el.erroMultiMes.textContent = 'Informe um valor válido.'; return; }
+  if (!tipo)                    { el.erroMultiMes.textContent = 'Selecione o tipo.'; return; }
+  if (checkboxes.length === 0)  { el.erroMultiMes.textContent = 'Selecione ao menos um mês.'; return; }
+
+  const btnConfirmar = document.getElementById('btn-confirmar-multi');
+  btnConfirmar.disabled    = true;
+  btnConfirmar.textContent = 'Salvando...';
+
+  const { uid } = estado.usuarioAtual;
+  const dadosTransacao = { descricao, valor, valorRestante: valor, tipo };
+
+  await Promise.all(
+    checkboxes.map(cb => salvarTransacaoNoMes(uid, cb.value, dadosTransacao))
+  );
+
+  btnConfirmar.disabled    = false;
+  btnConfirmar.textContent = 'Lançar em todos';
+  fecharModalMultiMes();
 };
 
 
@@ -313,7 +490,7 @@ window.abrirModalAbatimento = async function(transacaoId) {
   const transacao = estado.transacoes.find(t => t.id === transacaoId);
   if (!transacao) return;
 
-  estado.transacaoAbatendo = transacao;
+  estado.transacaoAbatendo      = transacao;
   el.erroAbatimento.textContent = '';
   el.valorAbatimento.value      = '';
   el.descAbatimento.value       = '';
@@ -321,38 +498,29 @@ window.abrirModalAbatimento = async function(transacaoId) {
   const valorRestante = transacao.valorRestante !== undefined ? transacao.valorRestante : transacao.valor;
   el.modalInfo.innerHTML = `
     <strong>${transacao.descricao}</strong><br>
-    Valor original: ${fmt(transacao.valor)} &nbsp;|&nbsp;
-    Restante: <strong>${fmt(valorRestante)}</strong>
+    Original: ${fmt(transacao.valor)} &nbsp;|&nbsp; Restante: <strong>${fmt(valorRestante)}</strong>
   `;
 
-
   await carregarHistoricoAbatimentos(transacaoId);
-
   el.modalAbatimento.classList.remove('modal-overlay--escondida');
 };
 
 async function carregarHistoricoAbatimentos(transacaoId) {
   const { uid } = estado.usuarioAtual;
-  const col = colAbatimentos(uid, estado.mesAtualId, transacaoId);
-  const q   = query(col, orderBy('criadoEm', 'desc'));
+  const q = query(colAbatimentos(uid, estado.mesAtualId, transacaoId), orderBy('criadoEm', 'desc'));
   const snap = await getDocs(q);
 
-  if (snap.empty) {
-    el.modalHistorico.innerHTML = '';
-    return;
-  }
+  if (snap.empty) { el.modalHistorico.innerHTML = ''; return; }
 
   el.modalHistorico.innerHTML = `
     <p class="historico-titulo">Histórico de abatimentos</p>
     ${snap.docs.map(d => {
-      const ab = d.data();
+      const ab   = d.data();
       const data = new Date(ab.criadoEm).toLocaleDateString('pt-BR');
-      return `
-        <div class="historico-item">
-          <span>${ab.descricao || 'Abatimento'} · ${data}</span>
-          <span>- ${fmt(ab.valor)}</span>
-        </div>
-      `;
+      return `<div class="historico-item">
+        <span>${ab.descricao || 'Abatimento'} · ${data}</span>
+        <span>- ${fmt(ab.valor)}</span>
+      </div>`;
     }).join('')}
   `;
 }
@@ -363,36 +531,27 @@ window.fecharModalAbatimento = function() {
 };
 
 window.confirmarAbatimento = async function() {
-  const transacao     = estado.transacaoAbatendo;
-  const valorAbater   = parseFloat(el.valorAbatimento.value);
-  const descricaoAb   = el.descAbatimento.value.trim() || 'Abatimento';
-  const valorRestante = transacao.valorRestante !== undefined ? transacao.valorRestante : transacao.valor;
+  const transacao      = estado.transacaoAbatendo;
+  const valorAbater    = parseFloat(el.valorAbatimento.value);
+  const descricaoAb    = el.descAbatimento.value.trim() || 'Abatimento';
+  const valorRestante  = transacao.valorRestante !== undefined ? transacao.valorRestante : transacao.valor;
 
   el.erroAbatimento.textContent = '';
 
-  if (!valorAbater || valorAbater <= 0) {
-    el.erroAbatimento.textContent = 'Informe um valor válido.';
-    return;
-  }
-  if (valorAbater > valorRestante) {
-    el.erroAbatimento.textContent = `Valor máximo permitido: ${fmt(valorRestante)}`;
-    return;
-  }
+  if (!valorAbater || valorAbater <= 0) { el.erroAbatimento.textContent = 'Informe um valor válido.'; return; }
+  if (valorAbater > valorRestante)      { el.erroAbatimento.textContent = `Máximo: ${fmt(valorRestante)}`; return; }
 
-  const { uid }    = estado.usuarioAtual;
+  const { uid }      = estado.usuarioAtual;
   const novoRestante = +(valorRestante - valorAbater).toFixed(2);
 
-
-  await addDoc(
-    colAbatimentos(uid, estado.mesAtualId, transacao.id),
-    { valor: valorAbater, descricao: descricaoAb, criadoEm: new Date().toISOString() }
-  );
-
-
+  await addDoc(colAbatimentos(uid, estado.mesAtualId, transacao.id), {
+    valor: valorAbater, descricao: descricaoAb, criadoEm: new Date().toISOString(),
+  });
   await updateDoc(
     doc(db, 'usuarios', uid, 'meses', estado.mesAtualId, 'transacoes', transacao.id),
     { valorRestante: novoRestante }
   );
+  await updateDoc(docMes(uid, estado.mesAtualId), { ultimaEdicao: serverTimestamp() });
 
   fecharModalAbatimento();
 };
@@ -408,20 +567,18 @@ function renderizarLista() {
     el.lista.innerHTML = '<li class="lista-transacoes__vazia">Nenhuma transação ainda. Adicione uma acima. ✦</li>';
     return;
   }
-
   el.lista.innerHTML = estado.transacoes.map(t => {
-    const valorRestante = t.valorRestante !== undefined ? t.valorRestante : t.valor;
-    const temAbatimento = valorRestante < t.valor;
+    const vr    = t.valorRestante !== undefined ? t.valorRestante : t.valor;
+    const abatido = vr < t.valor;
     const sinal = t.tipo === 'entrada' ? '+' : '-';
-    const classe = t.tipo === 'entrada' ? 'transacao--entrada' : 'transacao--saida';
-
+    const cls   = t.tipo === 'entrada' ? 'transacao--entrada' : 'transacao--saida';
     return `
-      <li class="transacao ${classe}">
+      <li class="transacao ${cls}">
         <div class="transacao__info">
           <span class="transacao__descricao">${t.descricao}</span>
-          ${temAbatimento ? `<span class="transacao__abatido">Restante: ${fmt(valorRestante)} de ${fmt(t.valor)}</span>` : ''}
+          ${abatido ? `<span class="transacao__abatido">Restante: ${fmt(vr)} de ${fmt(t.valor)}</span>` : ''}
         </div>
-        <span class="transacao__valor">${sinal} ${fmt(valorRestante)}</span>
+        <span class="transacao__valor">${sinal} ${fmt(vr)}</span>
         <div class="transacao__acoes">
           ${t.tipo === 'saida' ? `
             <button class="transacao__btn transacao__btn--abater"
@@ -441,11 +598,9 @@ function atualizarResumo() {
   const entradas = estado.transacoes
     .filter(t => t.tipo === 'entrada')
     .reduce((a, t) => a + (t.valorRestante !== undefined ? t.valorRestante : t.valor), 0);
-
   const saidas = estado.transacoes
     .filter(t => t.tipo === 'saida')
     .reduce((a, t) => a + (t.valorRestante !== undefined ? t.valorRestante : t.valor), 0);
-
   const saldo = entradas - saidas;
 
   el.totalEntradas.textContent = fmt(entradas);
@@ -457,7 +612,7 @@ function atualizarResumo() {
 
 onAuthStateChanged(auth, (usuario) => {
   if (usuario) {
-    estado.usuarioAtual = usuario;
+    estado.usuarioAtual         = usuario;
     el.usuarioNome.textContent  = usuario.displayName || usuario.email;
     el.usuarioNome2.textContent = usuario.displayName || usuario.email;
     mostrarTela('tela-meses');
