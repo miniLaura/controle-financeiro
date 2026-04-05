@@ -11,20 +11,18 @@
   </head>
   <body>
 
-    <div class="tela-auth" id="tela-auth">
+    <!-- ========== TELA 1: AUTH ========== -->
+    <div class="tela" id="tela-auth">
       <div class="auth-card">
         <div class="auth-logo">
           <span class="auth-logo__icone">◈</span>
           <h1 class="auth-logo__titulo">Controle Financeiro</h1>
           <p class="auth-logo__sub">Inteligente</p>
         </div>
-
         <div class="auth-abas">
           <button class="auth-aba auth-aba--ativa" id="aba-login" onclick="trocarAba('login')">Entrar</button>
           <button class="auth-aba" id="aba-cadastro" onclick="trocarAba('cadastro')">Criar conta</button>
         </div>
-
-
         <form class="auth-form" id="form-login" novalidate>
           <div class="formulario__grupo">
             <label class="formulario__label" for="login-email">E-mail</label>
@@ -37,8 +35,6 @@
           <p class="auth-erro" id="erro-login"></p>
           <button class="botao-primario" type="submit" id="btn-login">Entrar</button>
         </form>
-
-
         <form class="auth-form auth-form--escondido" id="form-cadastro" novalidate>
           <div class="formulario__grupo">
             <label class="formulario__label" for="cadastro-nome">Nome</label>
@@ -58,8 +54,8 @@
       </div>
     </div>
 
-    <div class="app-principal app-principal--escondido" id="app-principal">
-
+    <!-- ========== TELA 2: MESES (DASHBOARD) ========== -->
+    <div class="tela tela--escondida" id="tela-meses">
       <header class="cabecalho">
         <div class="cabecalho__conteudo">
           <div class="cabecalho__logo">
@@ -69,13 +65,49 @@
           </div>
           <div class="cabecalho__usuario">
             <span class="usuario-nome" id="usuario-nome"></span>
-            <button class="botao-sair" id="btn-sair" onclick="sair()">Sair</button>
+            <button class="botao-sair" onclick="sair()">Sair</button>
           </div>
         </div>
       </header>
+      <main class="principal">
+        <section class="secao-formulario">
+          <h2 class="secao__titulo">Novo Mês</h2>
+          <form class="formulario formulario--inline" id="form-novo-mes" novalidate>
+            <div class="formulario__grupo formulario__grupo--grow">
+              <label class="formulario__label" for="nome-mes">Nome do mês</label>
+              <input class="formulario__input" type="text" id="nome-mes" placeholder="Ex: Janeiro 2025, Março..." autocomplete="off" required />
+            </div>
+            <button class="botao-primario botao-primario--sm" type="submit">+ Criar mês</button>
+          </form>
+        </section>
+        <section class="secao-lista">
+          <h2 class="secao__titulo">Seus Meses</h2>
+          <div class="grid-meses" id="grid-meses">
+            <p class="lista-transacoes__vazia">Nenhum mês criado ainda. Crie um acima. ✦</p>
+          </div>
+        </section>
+      </main>
+      <footer class="rodape"><p>Controle Financeiro Inteligente &mdash; Firebase + JS</p></footer>
+    </div>
 
+    <!-- ========== TELA 3: LANÇAMENTOS ========== -->
+    <div class="tela tela--escondida" id="tela-lancamentos">
+      <header class="cabecalho">
+        <div class="cabecalho__conteudo">
+          <button class="botao-voltar" onclick="voltarParaMeses()">← Meses</button>
+          <div class="cabecalho__logo">
+            <span class="cabecalho__icone">◈</span>
+            <span class="cabecalho__titulo" id="titulo-mes-atual">—</span>
+          </div>
+          <div class="cabecalho__usuario">
+            <span class="usuario-nome" id="usuario-nome-2"></span>
+            <button class="botao-sair" onclick="sair()">Sair</button>
+          </div>
+        </div>
+      </header>
       <main class="principal">
 
+        <!-- Cards de resumo -->
         <section class="resumo" aria-label="Resumo financeiro">
           <div class="card card--saldo" id="card-saldo">
             <span class="card__rotulo">Saldo Total</span>
@@ -91,7 +123,8 @@
           </div>
         </section>
 
-        <section class="secao-formulario" aria-label="Nova transação">
+        <!-- Formulário de transação -->
+        <section class="secao-formulario">
           <h2 class="secao__titulo">Nova Transação</h2>
           <form class="formulario" id="formulario-transacao" novalidate>
             <div class="formulario__grupo">
@@ -119,20 +152,44 @@
           </form>
         </section>
 
-        <section class="secao-lista" aria-label="Histórico de transações">
+        <!-- Lista de transações -->
+        <section class="secao-lista">
           <h2 class="secao__titulo">Histórico</h2>
           <ul class="lista-transacoes" id="lista-transacoes">
-            <li class="lista-transacoes__vazia">Nenhuma transação ainda. Adicione uma acima. ✦</li>
+            <li class="lista-transacoes__vazia">Nenhuma transação ainda. ✦</li>
           </ul>
         </section>
 
       </main>
-
-      <footer class="rodape">
-        <p>Controle Financeiro Inteligente </p>
-      </footer>
+      <footer class="rodape"><p>Controle Financeiro Inteligente &mdash; Firebase + JS</p></footer>
     </div>
 
+    <!-- ========== MODAL: ABATIMENTO ========== -->
+    <div class="modal-overlay modal-overlay--escondida" id="modal-abatimento">
+      <div class="modal">
+        <div class="modal__header">
+          <h3 class="modal__titulo">Registrar Abatimento</h3>
+          <button class="modal__fechar" onclick="fecharModalAbatimento()">✕</button>
+        </div>
+        <div class="modal__body">
+          <p class="modal__info" id="modal-info-transacao"></p>
+          <div class="formulario__grupo">
+            <label class="formulario__label" for="valor-abatimento">Valor a abater (R$)</label>
+            <input class="formulario__input" type="number" id="valor-abatimento" placeholder="0,00" step="0.01" min="0.01" />
+          </div>
+          <div class="formulario__grupo">
+            <label class="formulario__label" for="descricao-abatimento">Observação (opcional)</label>
+            <input class="formulario__input" type="text" id="descricao-abatimento" placeholder="Ex: Pagamento parcial" />
+          </div>
+          <p class="auth-erro" id="erro-abatimento"></p>
+          <div class="modal__historico" id="modal-historico"></div>
+        </div>
+        <div class="modal__footer">
+          <button class="botao-secundario" onclick="fecharModalAbatimento()">Cancelar</button>
+          <button class="botao-primario" onclick="confirmarAbatimento()" id="btn-confirmar-abatimento">Confirmar</button>
+        </div>
+      </div>
+    </div>
 
     <script type="module" src="script.js"></script>
   </body>

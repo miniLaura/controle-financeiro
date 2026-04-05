@@ -1,26 +1,30 @@
+/**
+ * Controle Financeiro Inteligente
+ * ================================
+ * Fluxo: Login → Seleção de Mês → Lançamentos
+ * Firebase Auth + Firestore
+ *
+ * Estrutura Firestore:
+ *   usuarios/{uid}/meses/{mesId}
+ *   usuarios/{uid}/meses/{mesId}/transacoes/{transacaoId}
+ *   usuarios/{uid}/meses/{mesId}/abatimentos/{abatimentoId}
+ */
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  updateProfile,
+  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  signOut, onAuthStateChanged, updateProfile,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
-  getFirestore,
-  collection,
-  addDoc,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  query,
-  orderBy,
+  getFirestore, collection, addDoc, deleteDoc, updateDoc,
+  doc, onSnapshot, query, orderBy, getDocs, getDoc,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 'use strict';
 
-
+/* ============================================================
+   1. CONFIGURAÇÃO FIREBASE
+   ============================================================ */
 const firebaseConfig = {
   apiKey: "AIzaSyBqoGraJXoKHXQZKD_M1N9AtoZNYkDs390",
   authDomain: "controle-financeiro-27322.firebaseapp.com",
@@ -30,232 +34,277 @@ const firebaseConfig = {
   appId: "1:7208831581:web:cd8d4aaf81ca5fd6ad1bb4"
 };
 
-const app        = initializeApp(firebaseConfig);
-const auth       = getAuth(app);
-const db         = getFirestore(app);
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
 
-
-const elementos = {
-  telaAuth:       document.getElementById('tela-auth'),
-  appPrincipal:   document.getElementById('app-principal'),
-  // Auth
-  formLogin:      document.getElementById('form-login'),
-  formCadastro:   document.getElementById('form-cadastro'),
-  loginEmail:     document.getElementById('login-email'),
-  loginSenha:     document.getElementById('login-senha'),
-  erroLogin:      document.getElementById('erro-login'),
-  cadastroNome:   document.getElementById('cadastro-nome'),
-  cadastroEmail:  document.getElementById('cadastro-email'),
-  cadastroSenha:  document.getElementById('cadastro-senha'),
-  erroCadastro:   document.getElementById('erro-cadastro'),
-  // App
-  usuarioNome:    document.getElementById('usuario-nome'),
-  formulario:     document.getElementById('formulario-transacao'),
-  descricao:      document.getElementById('descricao'),
-  valor:          document.getElementById('valor'),
-  lista:          document.getElementById('lista-transacoes'),
-  saldoTotal:     document.getElementById('saldo-total'),
-  totalEntradas:  document.getElementById('total-entradas'),
-  totalSaidas:    document.getElementById('total-saidas'),
-  cardSaldo:      document.querySelector('.card--saldo'),
-};
-
-
+/* ============================================================
+   2. ESTADO GLOBAL
+   ============================================================ */
 const estado = {
-  usuarioAtual: null,
-  transacoes:   [],
-  unsubscribe:  null,
+  usuarioAtual:      null,
+  mesAtualId:        null,
+  mesAtualNome:      null,
+  transacoes:        [],
+  unsubTransacoes:   null, // cancela listener de transações ao sair do mês
+  unsubMeses:        null, // cancela listener de meses ao fazer logout
+  // Modal de abatimento
+  transacaoAbatendo: null,
 };
 
-
-
-
-window.trocarAba = function(aba) {
-  const abas   = { login: 'aba-login',    cadastro: 'aba-cadastro' };
-  const formas = { login: 'form-login',   cadastro: 'form-cadastro' };
-
-  Object.keys(abas).forEach((k) => {
-    document.getElementById(abas[k]).classList.toggle('auth-aba--ativa', k === aba);
-    document.getElementById(formas[k]).classList.toggle('auth-form--escondido', k !== aba);
-  });
-
-  elementos.erroLogin.textContent   = '';
-  elementos.erroCadastro.textContent = '';
+/* ============================================================
+   3. ELEMENTOS DO DOM
+   ============================================================ */
+const el = {
+  // Telas
+  telaAuth:        document.getElementById('tela-auth'),
+  telaMeses:       document.getElementById('tela-meses'),
+  telaLancamentos: document.getElementById('tela-lancamentos'),
+  // Auth
+  formLogin:       document.getElementById('form-login'),
+  formCadastro:    document.getElementById('form-cadastro'),
+  loginEmail:      document.getElementById('login-email'),
+  loginSenha:      document.getElementById('login-senha'),
+  erroLogin:       document.getElementById('erro-login'),
+  cadastroNome:    document.getElementById('cadastro-nome'),
+  cadastroEmail:   document.getElementById('cadastro-email'),
+  cadastroSenha:   document.getElementById('cadastro-senha'),
+  erroCadastro:    document.getElementById('erro-cadastro'),
+  // Meses
+  usuarioNome:     document.getElementById('usuario-nome'),
+  usuarioNome2:    document.getElementById('usuario-nome-2'),
+  formNovoMes:     document.getElementById('form-novo-mes'),
+  nomeMes:         document.getElementById('nome-mes'),
+  gridMeses:       document.getElementById('grid-meses'),
+  // Lançamentos
+  tituloMesAtual:  document.getElementById('titulo-mes-atual'),
+  formTransacao:   document.getElementById('formulario-transacao'),
+  descricao:       document.getElementById('descricao'),
+  valor:           document.getElementById('valor'),
+  lista:           document.getElementById('lista-transacoes'),
+  saldoTotal:      document.getElementById('saldo-total'),
+  totalEntradas:   document.getElementById('total-entradas'),
+  totalSaidas:     document.getElementById('total-saidas'),
+  cardSaldo:       document.getElementById('card-saldo'),
+  // Modal
+  modalAbatimento: document.getElementById('modal-abatimento'),
+  modalInfo:       document.getElementById('modal-info-transacao'),
+  valorAbatimento: document.getElementById('valor-abatimento'),
+  descAbatimento:  document.getElementById('descricao-abatimento'),
+  erroAbatimento:  document.getElementById('erro-abatimento'),
+  modalHistorico:  document.getElementById('modal-historico'),
 };
 
-
-function traduzirErro(codigo) {
-  const erros = {
-    'auth/invalid-email':            'E-mail inválido.',
-    'auth/user-not-found':           'Usuário não encontrado.',
-    'auth/wrong-password':           'Senha incorreta.',
-    'auth/email-already-in-use':     'Este e-mail já está cadastrado.',
-    'auth/weak-password':            'A senha deve ter pelo menos 6 caracteres.',
-    'auth/too-many-requests':        'Muitas tentativas. Aguarde um momento.',
-    'auth/invalid-credential':       'E-mail ou senha incorretos.',
-  };
-  return erros[codigo] || 'Ocorreu um erro. Tente novamente.';
-}
-
-function setCarregando(botaoId, carregando) {
-  const btn = document.getElementById(botaoId);
-  btn.disabled = carregando;
-  btn.classList.toggle('botao-primario--carregando', carregando);
-  btn.textContent = carregando ? 'Aguarde...' : (botaoId === 'btn-login' ? 'Entrar' : 'Criar conta');
-}
-
-
-elementos.formLogin.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  elementos.erroLogin.textContent = '';
-  setCarregando('btn-login', true);
-
-  try {
-    await signInWithEmailAndPassword(
-      auth,
-      elementos.loginEmail.value.trim(),
-      elementos.loginSenha.value
-    );
-  } catch (erro) {
-    elementos.erroLogin.textContent = traduzirErro(erro.code);
-    setCarregando('btn-login', false);
-  }
-});
-
-
-elementos.formCadastro.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  elementos.erroCadastro.textContent = '';
-  setCarregando('btn-cadastro', true);
-
-  const nome  = elementos.cadastroNome.value.trim();
-  const email = elementos.cadastroEmail.value.trim();
-  const senha = elementos.cadastroSenha.value;
-
-  if (!nome) {
-    elementos.erroCadastro.textContent = 'Informe seu nome.';
-    setCarregando('btn-cadastro', false);
-    return;
-  }
-
-  try {
-    const credencial = await createUserWithEmailAndPassword(auth, email, senha);
-    await updateProfile(credencial.user, { displayName: nome });
-  } catch (erro) {
-    elementos.erroCadastro.textContent = traduzirErro(erro.code);
-    setCarregando('btn-cadastro', false);
-  }
-});
-
-
-window.sair = async function() {
-  if (estado.unsubscribe) estado.unsubscribe();
-  await signOut(auth);
-};
-
-
-
-
-function colecaoTransacoes(uid) {
-  return collection(db, 'usuarios', uid, 'transacoes');
-}
-
-
-function escutarTransacoes(uid) {
-  const q = query(colecaoTransacoes(uid), orderBy('data', 'desc'));
-
-  estado.unsubscribe = onSnapshot(q, (snapshot) => {
-    estado.transacoes = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    renderizar();
-  });
-}
-
-async function salvarTransacao(transacao) {
-  const uid = estado.usuarioAtual.uid;
-  await addDoc(colecaoTransacoes(uid), transacao);
-}
-
-window.removerTransacao = async function(id) {
-  const confirmacao = confirm('Deseja remover esta transação?');
-  if (!confirmacao) return;
-
-  const uid = estado.usuarioAtual.uid;
-  await deleteDoc(doc(db, 'usuarios', uid, 'transacoes', id));
-};
-
-
-
-function formatarMoeda(valor) {
+/* ============================================================
+   4. UTILITÁRIOS
+   ============================================================ */
+function fmt(valor) {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-function formatarData(dataISO) {
-  const data = new Date(dataISO);
-  return data.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+function traduzirErro(codigo) {
+  const erros = {
+    'auth/invalid-email':        'E-mail inválido.',
+    'auth/user-not-found':       'Usuário não encontrado.',
+    'auth/wrong-password':       'Senha incorreta.',
+    'auth/email-already-in-use': 'Este e-mail já está cadastrado.',
+    'auth/weak-password':        'Senha deve ter pelo menos 6 caracteres.',
+    'auth/too-many-requests':    'Muitas tentativas. Aguarde.',
+    'auth/invalid-credential':   'E-mail ou senha incorretos.',
+  };
+  return erros[codigo] || 'Erro inesperado. Tente novamente.';
 }
 
-function criarHTMLTransacao(transacao) {
-  const sinal  = transacao.tipo === 'entrada' ? '+' : '-';
-  const classe = transacao.tipo === 'entrada' ? 'transacao--entrada' : 'transacao--saida';
-  return `
-    <li class="transacao ${classe}" data-id="${transacao.id}">
-      <div class="transacao__info">
-        <span class="transacao__descricao">${transacao.descricao}</span>
-        <span class="transacao__data">${formatarData(transacao.data)}</span>
-      </div>
-      <span class="transacao__valor">${sinal} ${formatarMoeda(transacao.valor)}</span>
-      <button class="transacao__remover" onclick="removerTransacao('${transacao.id}')" title="Remover">✕</button>
-    </li>
-  `;
+function setCarregando(btnId, carregando, textoOriginal) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = carregando;
+  btn.classList.toggle('botao-primario--carregando', carregando);
+  btn.textContent = carregando ? 'Aguarde...' : textoOriginal;
 }
 
-function renderizarLista() {
-  if (estado.transacoes.length === 0) {
-    elementos.lista.innerHTML = `<li class="lista-transacoes__vazia">Nenhuma transação ainda. Adicione uma acima. ✦</li>`;
+/* ============================================================
+   5. NAVEGAÇÃO ENTRE TELAS
+   ============================================================ */
+function mostrarTela(id) {
+  ['tela-auth', 'tela-meses', 'tela-lancamentos'].forEach((telaId) => {
+    document.getElementById(telaId).classList.toggle('tela--escondida', telaId !== id);
+  });
+}
+
+/* ============================================================
+   6. AUTH
+   ============================================================ */
+window.trocarAba = function(aba) {
+  document.getElementById('aba-login').classList.toggle('auth-aba--ativa', aba === 'login');
+  document.getElementById('aba-cadastro').classList.toggle('auth-aba--ativa', aba === 'cadastro');
+  document.getElementById('form-login').classList.toggle('auth-form--escondido', aba !== 'login');
+  document.getElementById('form-cadastro').classList.toggle('auth-form--escondido', aba !== 'cadastro');
+  el.erroLogin.textContent = '';
+  el.erroCadastro.textContent = '';
+};
+
+el.formLogin.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  el.erroLogin.textContent = '';
+  setCarregando('btn-login', true, 'Entrar');
+  try {
+    await signInWithEmailAndPassword(auth, el.loginEmail.value.trim(), el.loginSenha.value);
+  } catch (erro) {
+    el.erroLogin.textContent = traduzirErro(erro.code);
+    setCarregando('btn-login', false, 'Entrar');
+  }
+});
+
+el.formCadastro.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  el.erroCadastro.textContent = '';
+  const nome  = el.cadastroNome.value.trim();
+  const email = el.cadastroEmail.value.trim();
+  const senha = el.cadastroSenha.value;
+  if (!nome) { el.erroCadastro.textContent = 'Informe seu nome.'; return; }
+  setCarregando('btn-cadastro', true, 'Criar conta');
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, senha);
+    await updateProfile(cred.user, { displayName: nome });
+  } catch (erro) {
+    el.erroCadastro.textContent = traduzirErro(erro.code);
+    setCarregando('btn-cadastro', false, 'Criar conta');
+  }
+});
+
+window.sair = async function() {
+  if (estado.unsubTransacoes) estado.unsubTransacoes();
+  if (estado.unsubMeses)      estado.unsubMeses();
+  estado.transacoes  = [];
+  estado.mesAtualId  = null;
+  await signOut(auth);
+};
+
+/* ============================================================
+   7. MESES — Firestore
+   ============================================================ */
+function colMeses(uid)        { return collection(db, 'usuarios', uid, 'meses'); }
+function colTransacoes(uid, mesId) { return collection(db, 'usuarios', uid, 'meses', mesId, 'transacoes'); }
+function colAbatimentos(uid, mesId, transacaoId) {
+  return collection(db, 'usuarios', uid, 'meses', mesId, 'transacoes', transacaoId, 'abatimentos');
+}
+
+// Escuta meses em tempo real e renderiza o dashboard
+function escutarMeses(uid) {
+  const q = query(colMeses(uid), orderBy('criadoEm', 'desc'));
+  estado.unsubMeses = onSnapshot(q, async (snapshot) => {
+    const meses = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    await renderizarGridMeses(meses, uid);
+  });
+}
+
+// Calcula totais de um mês buscando suas transações
+async function calcularTotaisMes(uid, mesId) {
+  const snapshot = await getDocs(colTransacoes(uid, mesId));
+  let entradas = 0, saidas = 0;
+  snapshot.forEach(d => {
+    const t = d.data();
+    const valorRestante = t.valorRestante !== undefined ? t.valorRestante : t.valor;
+    if (t.tipo === 'entrada') entradas += valorRestante;
+    else                      saidas   += valorRestante;
+  });
+  return { entradas, saidas, saldo: entradas - saidas };
+}
+
+// Decide classe de status do card do mês
+function statusMes(saldo, entradas) {
+  if (entradas === 0 && saldo === 0) return 'neutro';
+  if (saldo > 0)  return 'positivo';
+  if (saldo === 0) return 'atencao';
+  return 'critico';
+}
+
+async function renderizarGridMeses(meses, uid) {
+  if (meses.length === 0) {
+    el.gridMeses.innerHTML = '<p class="lista-transacoes__vazia">Nenhum mês criado ainda. Crie um acima. ✦</p>';
     return;
   }
-  elementos.lista.innerHTML = estado.transacoes.map(criarHTMLTransacao).join('');
+
+  // Busca totais de todos os meses em paralelo
+  const totaisPromises = meses.map(m => calcularTotaisMes(uid, m.id));
+  const totais = await Promise.all(totaisPromises);
+
+  el.gridMeses.innerHTML = meses.map((mes, i) => {
+    const { entradas, saidas, saldo } = totais[i];
+    const status = statusMes(saldo, entradas);
+    const badges = {
+      positivo: '<span class="card-mes__badge badge--positivo">● Positivo</span>',
+      atencao:  '<span class="card-mes__badge badge--atencao">● Atenção</span>',
+      critico:  '<span class="card-mes__badge badge--critico">● Crítico</span>',
+      neutro:   '<span class="card-mes__badge badge--neutro">— Sem dados</span>',
+    };
+    return `
+      <div class="card-mes card-mes--${status}" onclick="abrirMes('${mes.id}', '${mes.nome.replace(/'/g, "\\'")}')">
+        <div class="card-mes__header">
+          <span class="card-mes__nome">${mes.nome}</span>
+          ${badges[status]}
+        </div>
+        <div class="card-mes__linha"><span>Entradas</span><span style="color:var(--cor-entrada)">${fmt(entradas)}</span></div>
+        <div class="card-mes__linha"><span>Saídas</span><span style="color:var(--cor-saida)">${fmt(saidas)}</span></div>
+        <div class="card-mes__saldo">${fmt(saldo)}</div>
+        <button class="card-mes__remover" onclick="removerMes(event,'${mes.id}')" title="Remover mês">✕</button>
+      </div>
+    `;
+  }).join('');
 }
 
-function atualizarResumo() {
-  const entradas = estado.transacoes.filter(t => t.tipo === 'entrada').reduce((a, t) => a + t.valor, 0);
-  const saidas   = estado.transacoes.filter(t => t.tipo === 'saida').reduce((a, t) => a + t.valor, 0);
-  const saldo    = entradas - saidas;
-
-  elementos.totalEntradas.textContent = formatarMoeda(entradas);
-  elementos.totalSaidas.textContent   = formatarMoeda(saidas);
-  elementos.saldoTotal.textContent    = formatarMoeda(saldo);
-  elementos.cardSaldo.classList.toggle('saldo-negativo', saldo < 0);
-}
-
-function renderizar() {
-  renderizarLista();
-  atualizarResumo();
-}
-
-function mostrarApp(usuario) {
-  elementos.telaAuth.style.display      = 'none';
-  elementos.appPrincipal.style.display  = 'flex';
-  elementos.appPrincipal.style.flexDirection = 'column';
-  elementos.usuarioNome.textContent = usuario.displayName || usuario.email;
-  escutarTransacoes(usuario.uid);
-}
-
-function mostrarAuth() {
-  elementos.telaAuth.style.display     = 'flex';
-  elementos.appPrincipal.style.display = 'none';
-  estado.transacoes = [];
-}
-
-
-elementos.formulario.addEventListener('submit', async (e) => {
+el.formNovoMes.addEventListener('submit', async (e) => {
   e.preventDefault();
+  const nome = el.nomeMes.value.trim();
+  if (!nome) return;
+  const uid = estado.usuarioAtual.uid;
+  await addDoc(colMeses(uid), { nome, criadoEm: new Date().toISOString() });
+  el.nomeMes.value = '';
+});
 
-  const descricao = elementos.descricao.value.trim();
-  const valor     = parseFloat(elementos.valor.value);
+window.removerMes = async function(event, mesId) {
+  event.stopPropagation(); // não abre o mês ao clicar no X
+  if (!confirm('Remover este mês e todas as transações?')) return;
+  const uid = estado.usuarioAtual.uid;
+  await deleteDoc(doc(db, 'usuarios', uid, 'meses', mesId));
+};
+
+window.abrirMes = function(mesId, mesNome) {
+  estado.mesAtualId   = mesId;
+  estado.mesAtualNome = mesNome;
+  el.tituloMesAtual.textContent = mesNome;
+  mostrarTela('tela-lancamentos');
+  escutarTransacoes();
+};
+
+window.voltarParaMeses = function() {
+  if (estado.unsubTransacoes) {
+    estado.unsubTransacoes();
+    estado.unsubTransacoes = null;
+  }
+  estado.mesAtualId  = null;
+  estado.transacoes  = [];
+  mostrarTela('tela-meses');
+};
+
+/* ============================================================
+   8. TRANSAÇÕES — Firestore
+   ============================================================ */
+function escutarTransacoes() {
+  const { uid } = estado.usuarioAtual;
+  const mesId   = estado.mesAtualId;
+  const q = query(colTransacoes(uid, mesId), orderBy('criadoEm', 'desc'));
+
+  estado.unsubTransacoes = onSnapshot(q, (snapshot) => {
+    estado.transacoes = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderizarLancamentos();
+  });
+}
+
+el.formTransacao.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const descricao = el.descricao.value.trim();
+  const valor     = parseFloat(el.valor.value);
   const tipo      = document.querySelector('input[name="tipo"]:checked')?.value;
 
   if (!descricao || !valor || valor <= 0 || !tipo) {
@@ -267,25 +316,188 @@ elementos.formulario.addEventListener('submit', async (e) => {
   btn.disabled = true;
   btn.textContent = 'Salvando...';
 
-  await salvarTransacao({
+  const { uid } = estado.usuarioAtual;
+  await addDoc(colTransacoes(uid, estado.mesAtualId), {
     descricao,
     valor,
+    valorRestante: valor, // usado para abatimentos
     tipo,
-    data: new Date().toISOString(),
+    criadoEm: new Date().toISOString(),
   });
 
-  elementos.formulario.reset();
+  el.formTransacao.reset();
   btn.disabled = false;
   btn.textContent = 'Adicionar Transação';
 });
 
+window.removerTransacao = async function(id) {
+  if (!confirm('Remover esta transação?')) return;
+  const { uid } = estado.usuarioAtual;
+  await deleteDoc(doc(db, 'usuarios', uid, 'meses', estado.mesAtualId, 'transacoes', id));
+};
 
+/* ============================================================
+   9. ABATIMENTOS
+   ============================================================ */
+window.abrirModalAbatimento = async function(transacaoId) {
+  const transacao = estado.transacoes.find(t => t.id === transacaoId);
+  if (!transacao) return;
+
+  estado.transacaoAbatendo = transacao;
+  el.erroAbatimento.textContent = '';
+  el.valorAbatimento.value      = '';
+  el.descAbatimento.value       = '';
+
+  const valorRestante = transacao.valorRestante !== undefined ? transacao.valorRestante : transacao.valor;
+  el.modalInfo.innerHTML = `
+    <strong>${transacao.descricao}</strong><br>
+    Valor original: ${fmt(transacao.valor)} &nbsp;|&nbsp;
+    Restante: <strong>${fmt(valorRestante)}</strong>
+  `;
+
+  // Carrega histórico de abatimentos
+  await carregarHistoricoAbatimentos(transacaoId);
+
+  el.modalAbatimento.classList.remove('modal-overlay--escondida');
+};
+
+async function carregarHistoricoAbatimentos(transacaoId) {
+  const { uid } = estado.usuarioAtual;
+  const col = colAbatimentos(uid, estado.mesAtualId, transacaoId);
+  const q   = query(col, orderBy('criadoEm', 'desc'));
+  const snap = await getDocs(q);
+
+  if (snap.empty) {
+    el.modalHistorico.innerHTML = '';
+    return;
+  }
+
+  el.modalHistorico.innerHTML = `
+    <p class="historico-titulo">Histórico de abatimentos</p>
+    ${snap.docs.map(d => {
+      const ab = d.data();
+      const data = new Date(ab.criadoEm).toLocaleDateString('pt-BR');
+      return `
+        <div class="historico-item">
+          <span>${ab.descricao || 'Abatimento'} · ${data}</span>
+          <span>- ${fmt(ab.valor)}</span>
+        </div>
+      `;
+    }).join('')}
+  `;
+}
+
+window.fecharModalAbatimento = function() {
+  el.modalAbatimento.classList.add('modal-overlay--escondida');
+  estado.transacaoAbatendo = null;
+};
+
+window.confirmarAbatimento = async function() {
+  const transacao     = estado.transacaoAbatendo;
+  const valorAbater   = parseFloat(el.valorAbatimento.value);
+  const descricaoAb   = el.descAbatimento.value.trim() || 'Abatimento';
+  const valorRestante = transacao.valorRestante !== undefined ? transacao.valorRestante : transacao.valor;
+
+  el.erroAbatimento.textContent = '';
+
+  if (!valorAbater || valorAbater <= 0) {
+    el.erroAbatimento.textContent = 'Informe um valor válido.';
+    return;
+  }
+  if (valorAbater > valorRestante) {
+    el.erroAbatimento.textContent = `Valor máximo permitido: ${fmt(valorRestante)}`;
+    return;
+  }
+
+  const { uid }    = estado.usuarioAtual;
+  const novoRestante = +(valorRestante - valorAbater).toFixed(2);
+
+  // Salva abatimento no histórico
+  await addDoc(
+    colAbatimentos(uid, estado.mesAtualId, transacao.id),
+    { valor: valorAbater, descricao: descricaoAb, criadoEm: new Date().toISOString() }
+  );
+
+  // Atualiza valorRestante na transação
+  await updateDoc(
+    doc(db, 'usuarios', uid, 'meses', estado.mesAtualId, 'transacoes', transacao.id),
+    { valorRestante: novoRestante }
+  );
+
+  fecharModalAbatimento();
+};
+
+/* ============================================================
+   10. RENDERIZAÇÃO DOS LANÇAMENTOS
+   ============================================================ */
+function renderizarLancamentos() {
+  renderizarLista();
+  atualizarResumo();
+}
+
+function renderizarLista() {
+  if (estado.transacoes.length === 0) {
+    el.lista.innerHTML = '<li class="lista-transacoes__vazia">Nenhuma transação ainda. Adicione uma acima. ✦</li>';
+    return;
+  }
+
+  el.lista.innerHTML = estado.transacoes.map(t => {
+    const valorRestante = t.valorRestante !== undefined ? t.valorRestante : t.valor;
+    const temAbatimento = valorRestante < t.valor;
+    const sinal = t.tipo === 'entrada' ? '+' : '-';
+    const classe = t.tipo === 'entrada' ? 'transacao--entrada' : 'transacao--saida';
+
+    return `
+      <li class="transacao ${classe}">
+        <div class="transacao__info">
+          <span class="transacao__descricao">${t.descricao}</span>
+          ${temAbatimento ? `<span class="transacao__abatido">Restante: ${fmt(valorRestante)} de ${fmt(t.valor)}</span>` : ''}
+        </div>
+        <span class="transacao__valor">${sinal} ${fmt(valorRestante)}</span>
+        <div class="transacao__acoes">
+          ${t.tipo === 'saida' ? `
+            <button class="transacao__btn transacao__btn--abater"
+              onclick="abrirModalAbatimento('${t.id}')"
+              title="Registrar abatimento">⊖ Abater</button>
+          ` : ''}
+          <button class="transacao__btn transacao__btn--remover"
+            onclick="removerTransacao('${t.id}')"
+            title="Remover">✕</button>
+        </div>
+      </li>
+    `;
+  }).join('');
+}
+
+function atualizarResumo() {
+  const entradas = estado.transacoes
+    .filter(t => t.tipo === 'entrada')
+    .reduce((a, t) => a + (t.valorRestante !== undefined ? t.valorRestante : t.valor), 0);
+
+  const saidas = estado.transacoes
+    .filter(t => t.tipo === 'saida')
+    .reduce((a, t) => a + (t.valorRestante !== undefined ? t.valorRestante : t.valor), 0);
+
+  const saldo = entradas - saidas;
+
+  el.totalEntradas.textContent = fmt(entradas);
+  el.totalSaidas.textContent   = fmt(saidas);
+  el.saldoTotal.textContent    = fmt(saldo);
+  el.cardSaldo.classList.toggle('saldo-negativo', saldo < 0);
+}
+
+/* ============================================================
+   11. INICIALIZAÇÃO — observa autenticação
+   ============================================================ */
 onAuthStateChanged(auth, (usuario) => {
   if (usuario) {
-    estado.usuarioAtual = usuario; 
-    mostrarApp(usuario);
+    estado.usuarioAtual = usuario;
+    el.usuarioNome.textContent  = usuario.displayName || usuario.email;
+    el.usuarioNome2.textContent = usuario.displayName || usuario.email;
+    mostrarTela('tela-meses');
+    escutarMeses(usuario.uid);
   } else {
-    estado.usuarioAtual = null; 
-    mostrarAuth();
+    estado.usuarioAtual = null;
+    mostrarTela('tela-auth');
   }
 });
