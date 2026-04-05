@@ -16,6 +16,7 @@ import {
   onSnapshot,
   query,
   orderBy,
+  where
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 'use strict';
@@ -65,6 +66,7 @@ const estado = {
   usuarioAtual: null,
   transacoes:   [],
   unsubscribe:  null,
+  mesSelecionado: null,
 };
 
 
@@ -162,7 +164,11 @@ function colecaoTransacoes(uid) {
 
 
 function escutarTransacoes(uid) {
-  const q = query(colecaoTransacoes(uid), orderBy('data', 'desc'));
+  const q = query(
+    colecaoTransacoes(uid),
+    where('mes', '==', estado.mesSelecionado),
+    orderBy('data', 'desc')
+  );
 
   estado.unsubscribe = onSnapshot(q, (snapshot) => {
     estado.transacoes = snapshot.docs.map((doc) => ({
@@ -237,11 +243,13 @@ function renderizar() {
 }
 
 function mostrarApp(usuario) {
-  elementos.telaAuth.style.display      = 'none';
-  elementos.appPrincipal.style.display  = 'flex';
-  elementos.appPrincipal.style.flexDirection = 'column';
+  elementos.telaAuth.style.display = 'none';
+  elementos.appPrincipal.style.display = 'flex';
+
+  document.getElementById('tela-meses').style.display = 'block';
+  document.getElementById('conteudo-app').style.display = 'none';
+
   elementos.usuarioNome.textContent = usuario.displayName || usuario.email;
-  escutarTransacoes(usuario.uid);
 }
 
 function mostrarAuth() {
@@ -272,6 +280,7 @@ elementos.formulario.addEventListener('submit', async (e) => {
     valor,
     tipo,
     data: new Date().toISOString(),
+    mes: estado.mesSelecionado,
   });
 
   elementos.formulario.reset();
@@ -279,6 +288,28 @@ elementos.formulario.addEventListener('submit', async (e) => {
   btn.textContent = 'Adicionar Transação';
 });
 
+window.entrarMes = function () {
+  const mes = document.getElementById('input-mes').value;
+
+  if (!mes) {
+    alert('Selecione um mês');
+    return;
+  }
+
+  estado.mesSelecionado = mes;
+
+  document.getElementById('tela-meses').style.display = 'none';
+  document.getElementById('conteudo-app').style.display = 'block';
+
+  if (estado.unsubscribe) estado.unsubscribe();
+};
+
+window.voltarMes = function () {
+  document.getElementById('tela-meses').style.display = 'block';
+  document.getElementById('conteudo-app').style.display = 'none';
+
+  if (estado.unsubscribe) estado.unsubscribe();
+};
 
 onAuthStateChanged(auth, (usuario) => {
   if (usuario) {
