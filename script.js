@@ -289,4 +289,3 @@ onAuthStateChanged(auth, (usuario) => {
     mostrarAuth();
   }
 });
-
