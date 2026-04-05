@@ -1,6 +1,4 @@
-/* ============================================================
-   DESIGN SYSTEM
-   ============================================================ */
+
 :root {
   --cor-fundo:          #0f1117;
   --cor-superficie:     #1a1d27;
@@ -33,9 +31,7 @@
   --sombra-saida:  0 0 24px rgba(255, 92, 122, 0.14);
 }
 
-/* ============================================================
-   RESET & BASE
-   ============================================================ */
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -58,9 +54,6 @@ body {
 ul { list-style: none; }
 input, button { font-family: inherit; }
 
-/* ============================================================
-   CABEÇALHO
-   ============================================================ */
 .cabecalho {
   background-color: var(--cor-superficie);
   border-bottom: 1px solid var(--cor-borda);
@@ -103,9 +96,7 @@ input, button { font-family: inherit; }
   margin-left: 4px;
 }
 
-/* ============================================================
-   PRINCIPAL
-   ============================================================ */
+
 .principal {
   flex: 1;
   max-width: 860px;
@@ -117,9 +108,7 @@ input, button { font-family: inherit; }
   gap: var(--espaco-lg);
 }
 
-/* ============================================================
-   CARDS DE RESUMO
-   ============================================================ */
+
 .resumo {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -166,16 +155,13 @@ input, button { font-family: inherit; }
 .card--saidas { border-top: 3px solid var(--cor-saida); }
 .card--saidas .card__valor { color: var(--cor-saida); }
 
-/* Saldo negativo */
 .card--saldo.saldo-negativo {
   border-top-color: var(--cor-saida);
   box-shadow: var(--sombra-card), var(--sombra-saida);
 }
 .card--saldo.saldo-negativo .card__valor { color: var(--cor-saida); }
 
-/* ============================================================
-   TÍTULO DE SEÇÃO
-   ============================================================ */
+
 .secao__titulo {
   font-size: 0.75rem;
   font-weight: 600;
@@ -195,9 +181,7 @@ input, button { font-family: inherit; }
   background-color: var(--cor-borda);
 }
 
-/* ============================================================
-   FORMULÁRIO
-   ============================================================ */
+
 .secao-formulario {
   background-color: var(--cor-superficie);
   border: 1px solid var(--cor-borda);
@@ -262,7 +246,7 @@ input, button { font-family: inherit; }
 .formulario__input[type='number']::-webkit-inner-spin-button,
 .formulario__input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; }
 
-/* Tipo de transação */
+
 .formulario__tipo {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -305,9 +289,7 @@ input, button { font-family: inherit; }
   border-color: var(--cor-saida);
 }
 
-/* ============================================================
-   BOTÃO PRIMÁRIO
-   ============================================================ */
+
 .botao-primario {
   background-color: var(--cor-acento);
   color: #0f1117;
@@ -325,9 +307,6 @@ input, button { font-family: inherit; }
 .botao-primario:hover { opacity: 0.88; transform: translateY(-1px); }
 .botao-primario:active { transform: translateY(0); opacity: 1; }
 
-/* ============================================================
-   LISTA DE TRANSAÇÕES
-   ============================================================ */
 .secao-lista { }
 
 .lista-transacoes {
@@ -407,17 +386,12 @@ input, button { font-family: inherit; }
   background-color: var(--cor-saida-suave);
 }
 
-/* ============================================================
-   ANIMAÇÕES
-   ============================================================ */
 @keyframes entradaItem {
   from { opacity: 0; transform: translateY(-8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ============================================================
-   RODAPÉ
-   ============================================================ */
+
 .rodape {
   text-align: center;
   padding: var(--espaco-lg);
@@ -426,9 +400,7 @@ input, button { font-family: inherit; }
   border-top: 1px solid var(--cor-borda);
 }
 
-/* ============================================================
-   RESPONSIVIDADE
-   ============================================================ */
+
 @media (max-width: 640px) {
   .principal { padding: var(--espaco-md); }
   .resumo { grid-template-columns: 1fr; }
@@ -436,9 +408,7 @@ input, button { font-family: inherit; }
   .card__valor { font-size: 1.3rem; }
 }
 
-/* ============================================================
-   AUTH — Tela de login/cadastro
-   ============================================================ */
+
 .tela-auth {
   min-height: 100vh;
   display: flex;
@@ -529,9 +499,7 @@ input, button { font-family: inherit; }
   text-align: center;
 }
 
-/* ============================================================
-   CABEÇALHO — usuário logado
-   ============================================================ */
+
 .cabecalho__usuario {
   display: flex;
   align-items: center;
@@ -565,9 +533,7 @@ input, button { font-family: inherit; }
   color: var(--cor-saida);
 }
 
-/* ============================================================
-   UTILITÁRIOS
-   ============================================================ */
+
 .app-principal--escondido {
   display: none;
 }
