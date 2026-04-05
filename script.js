@@ -290,12 +290,3 @@ onAuthStateChanged(auth, (usuario) => {
   }
 });
 
-async function salvarTransacao(transacao) {
-  if (!estado.usuarioAtual) {
-    alert("Usuário não autenticado.");
-    return;
-  }
-
-  const uid = estado.usuarioAtual.uid;
-  await addDoc(colecaoTransacoes(uid), transacao);
-}
