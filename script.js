@@ -33,8 +33,16 @@ const estado = {
   unsubTransacoes:   null, 
   unsubMeses:        null, 
   transacaoAbatendo: null,
-};
-
+  
+}
+frasesRodape: [
+  "Funciona no sistema, na vida real ainda em teste",
+  "Se não anotar, nem Deus sabe pra onde foi",
+  "Commitando gastos desde sempre",
+  "Confia no processo… e no limite do cartão",
+  "Organizando hoje pra não chorar amanhã",
+  "console.log('cadê meu dinheiro?')"
+];
 
 const el = {
   // Telas
@@ -79,6 +87,40 @@ const el = {
 
 function fmt(valor) {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+function atualizarFraseRodape(saldo = 0) {
+  const elRodape = document.getElementById("frase-rodape");
+  if (!elRodape) return;
+
+  let frases;
+
+  if (saldo < 0) {
+    frases = [
+      "Deu ruim… mas seguimos firmes",
+      "Saldo negativo, caráter positivo",
+      "Era só um gasto… virou história"
+    ];
+  } else if (saldo === 0) {
+    frases = [
+      "Empate técnico financeiro",
+      "Nem rico, nem falido… equilibrado"
+    ];
+  } else {
+    frases = [
+      "Aí sim, organização trazendo resultado",
+      "Tá funcionando… até eu tô surpresa",
+      "Gestão financeira nível avançado"
+    ];
+  }
+
+  const frase = frases[Math.floor(Math.random() * frases.length)];
+
+  elRodape.style.opacity = 0;
+
+  setTimeout(() => {
+    elRodape.textContent = frase;
+    elRodape.style.opacity = 1;
+  }, 300);
 }
 
 function traduzirErro(codigo) {
@@ -451,6 +493,7 @@ function atualizarResumo() {
   el.totalSaidas.textContent   = fmt(saidas);
   el.saldoTotal.textContent    = fmt(saldo);
   el.cardSaldo.classList.toggle('saldo-negativo', saldo < 0);
+  atualizarFraseRodape(saldo);
 }
 
 
@@ -461,8 +504,19 @@ onAuthStateChanged(auth, (usuario) => {
     el.usuarioNome2.textContent = usuario.displayName || usuario.email;
     mostrarTela('tela-meses');
     escutarMeses(usuario.uid);
+    setTimeout(() => atualizarFraseRodape(0), 300);
   } else {
     estado.usuarioAtual = null;
     mostrarTela('tela-auth');
   }
 });
+
+setInterval(() => {
+  const texto = document.getElementById("saldo-total")?.textContent || "0";
+
+  const saldoAtual = parseFloat(
+    texto.replace(/[^\d,-]/g, '').replace(',', '.')
+  ) || 0;
+
+  atualizarFraseRodape(saldoAtual);
+}, 6000);

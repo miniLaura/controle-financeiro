@@ -186,3 +186,7 @@ input, button { font-family: inherit; }
   .botao-primario--sm { width: 100%; }
   .grid-meses { grid-template-columns: 1fr; }
 }
+
+#frase-rodape {
+  transition: opacity 0.3s ease;
+}
