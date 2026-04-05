@@ -26,7 +26,7 @@ const auth = getAuth(app);
 const db   = getFirestore(app);
 
 
-const MESES_POR_PAGINA = 12;
+const MESES_POR_PAGINA = 13;
 
 const estado = {
   usuarioAtual:        null,
