@@ -33,6 +33,8 @@ Aplicação web para controle de finanças pessoais com autenticação e armazen
 
 ## 📌 Melhorias futuras
 
-- 🔄 Refatoração do projeto para React (componentização e melhor gerenciamento de estado)
-- 📅 Organização de transações por mês
-- ✏️ Edição de transações existentes
+- 🔄 Refatoração completa para React, utilizando hooks como useState e useEffect
+- 📅 Filtro e agrupamento de transações por mês
+- ✏️ Funcionalidade de edição de transações
+- 📊 Implementação de dashboard com gráficos financeiros
+- 🔐 Melhoria nas regras de segurança do Firebase
