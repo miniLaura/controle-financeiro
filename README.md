@@ -1,44 +1,38 @@
-# ◈ Controle Financeiro Inteligente
+# 💰 Controle Financeiro Inteligente
 
-> Aplicação web de controle financeiro pessoal desenvolvida com JavaScript, HTML semântico e CSS moderno.
+Aplicação web para controle de finanças pessoais com autenticação e armazenamento em nuvem.
 
----
+## 🚀 Funcionalidades
 
-## 🚧 Status
+- Cadastro e login de usuários
+- Adição de receitas e despesas
+- Remoção de transações
+- Cálculo automático de saldo
+- Persistência com Firebase
 
-Em desenvolvimento — projeto de portfólio construído etapa a etapa.
+## 🛠️ Tecnologias
 
----
+- JavaScript
+- HTML + CSS
+- Firebase (Auth + Firestore)
 
-## 🛠 Tecnologias
+## 🌐 Acesse o projeto
 
-- HTML5 semântico
-- CSS3 com custom properties (variáveis)
-- JavaScript ES6+ (vanilla)
-- localStorage para persistência de dados
-
----
-
-## 📌 Funcionalidades (planejadas)
-
-- [ ] Adicionar receitas e despesas
-- [ ] Exibir lista de transações
-- [ ] Calcular saldo automaticamente
-- [ ] Remover transações
-- [ ] Persistir dados com firebase
-- [ ] Filtro por tipo (entrada/saída)
-- [ ] Interface responsiva
-
----
-
-## 🚀 Como executar
-
-git clone https://github.com/miniLaura/controle-financeiro.git
+👉 [Link do projeto aqui]
 
 ## 📸 Preview
 
-> ![alt text](image.png)
+(colocar prints aqui)
 
----
+## 📚 Aprendizados
 
-Desenvolvido por Laura Neves como projeto de portfólio.
+- Manipulação de estado
+- Integração com Firebase
+- Organização de código
+- Tratamento de erros
+
+## 📌 Melhorias futuras
+
+- 🔄 Refatoração do projeto para React (componentização e melhor gerenciamento de estado)
+- 📅 Organização de transações por mês
+- ✏️ Edição de transações existentes
