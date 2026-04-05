@@ -1,15 +1,3 @@
-/**
- * Controle Financeiro Inteligente
- * ================================
- * Fluxo: Login → Seleção de Mês → Lançamentos
- * Firebase Auth + Firestore
- *
- * Estrutura Firestore:
- *   usuarios/{uid}/meses/{mesId}
- *   usuarios/{uid}/meses/{mesId}/transacoes/{transacaoId}
- *   usuarios/{uid}/meses/{mesId}/abatimentos/{abatimentoId}
- */
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
@@ -22,9 +10,7 @@ import {
 
 'use strict';
 
-/* ============================================================
-   1. CONFIGURAÇÃO FIREBASE
-   ============================================================ */
+
 const firebaseConfig = {
   apiKey: "AIzaSyBqoGraJXoKHXQZKD_M1N9AtoZNYkDs390",
   authDomain: "controle-financeiro-27322.firebaseapp.com",
@@ -38,23 +24,18 @@ const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
-/* ============================================================
-   2. ESTADO GLOBAL
-   ============================================================ */
+
 const estado = {
   usuarioAtual:      null,
   mesAtualId:        null,
   mesAtualNome:      null,
   transacoes:        [],
-  unsubTransacoes:   null, // cancela listener de transações ao sair do mês
-  unsubMeses:        null, // cancela listener de meses ao fazer logout
-  // Modal de abatimento
+  unsubTransacoes:   null, 
+  unsubMeses:        null, 
   transacaoAbatendo: null,
 };
 
-/* ============================================================
-   3. ELEMENTOS DO DOM
-   ============================================================ */
+
 const el = {
   // Telas
   telaAuth:        document.getElementById('tela-auth'),
@@ -95,9 +76,7 @@ const el = {
   modalHistorico:  document.getElementById('modal-historico'),
 };
 
-/* ============================================================
-   4. UTILITÁRIOS
-   ============================================================ */
+
 function fmt(valor) {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
@@ -122,18 +101,14 @@ function setCarregando(btnId, carregando, textoOriginal) {
   btn.textContent = carregando ? 'Aguarde...' : textoOriginal;
 }
 
-/* ============================================================
-   5. NAVEGAÇÃO ENTRE TELAS
-   ============================================================ */
+
 function mostrarTela(id) {
   ['tela-auth', 'tela-meses', 'tela-lancamentos'].forEach((telaId) => {
     document.getElementById(telaId).classList.toggle('tela--escondida', telaId !== id);
   });
 }
 
-/* ============================================================
-   6. AUTH
-   ============================================================ */
+
 window.trocarAba = function(aba) {
   document.getElementById('aba-login').classList.toggle('auth-aba--ativa', aba === 'login');
   document.getElementById('aba-cadastro').classList.toggle('auth-aba--ativa', aba === 'cadastro');
@@ -180,16 +155,14 @@ window.sair = async function() {
   await signOut(auth);
 };
 
-/* ============================================================
-   7. MESES — Firestore
-   ============================================================ */
+
 function colMeses(uid)        { return collection(db, 'usuarios', uid, 'meses'); }
 function colTransacoes(uid, mesId) { return collection(db, 'usuarios', uid, 'meses', mesId, 'transacoes'); }
 function colAbatimentos(uid, mesId, transacaoId) {
   return collection(db, 'usuarios', uid, 'meses', mesId, 'transacoes', transacaoId, 'abatimentos');
 }
 
-// Escuta meses em tempo real e renderiza o dashboard
+
 function escutarMeses(uid) {
   const q = query(colMeses(uid), orderBy('criadoEm', 'desc'));
   estado.unsubMeses = onSnapshot(q, async (snapshot) => {
@@ -198,7 +171,7 @@ function escutarMeses(uid) {
   });
 }
 
-// Calcula totais de um mês buscando suas transações
+
 async function calcularTotaisMes(uid, mesId) {
   const snapshot = await getDocs(colTransacoes(uid, mesId));
   let entradas = 0, saidas = 0;
@@ -211,7 +184,7 @@ async function calcularTotaisMes(uid, mesId) {
   return { entradas, saidas, saldo: entradas - saidas };
 }
 
-// Decide classe de status do card do mês
+
 function statusMes(saldo, entradas) {
   if (entradas === 0 && saldo === 0) return 'neutro';
   if (saldo > 0)  return 'positivo';
@@ -225,7 +198,7 @@ async function renderizarGridMeses(meses, uid) {
     return;
   }
 
-  // Busca totais de todos os meses em paralelo
+
   const totaisPromises = meses.map(m => calcularTotaisMes(uid, m.id));
   const totais = await Promise.all(totaisPromises);
 
@@ -263,7 +236,7 @@ el.formNovoMes.addEventListener('submit', async (e) => {
 });
 
 window.removerMes = async function(event, mesId) {
-  event.stopPropagation(); // não abre o mês ao clicar no X
+  event.stopPropagation(); 
   if (!confirm('Remover este mês e todas as transações?')) return;
   const uid = estado.usuarioAtual.uid;
   await deleteDoc(doc(db, 'usuarios', uid, 'meses', mesId));
@@ -287,9 +260,7 @@ window.voltarParaMeses = function() {
   mostrarTela('tela-meses');
 };
 
-/* ============================================================
-   8. TRANSAÇÕES — Firestore
-   ============================================================ */
+
 function escutarTransacoes() {
   const { uid } = estado.usuarioAtual;
   const mesId   = estado.mesAtualId;
@@ -320,7 +291,7 @@ el.formTransacao.addEventListener('submit', async (e) => {
   await addDoc(colTransacoes(uid, estado.mesAtualId), {
     descricao,
     valor,
-    valorRestante: valor, // usado para abatimentos
+    valorRestante: valor, 
     tipo,
     criadoEm: new Date().toISOString(),
   });
@@ -336,9 +307,7 @@ window.removerTransacao = async function(id) {
   await deleteDoc(doc(db, 'usuarios', uid, 'meses', estado.mesAtualId, 'transacoes', id));
 };
 
-/* ============================================================
-   9. ABATIMENTOS
-   ============================================================ */
+
 window.abrirModalAbatimento = async function(transacaoId) {
   const transacao = estado.transacoes.find(t => t.id === transacaoId);
   if (!transacao) return;
@@ -355,7 +324,7 @@ window.abrirModalAbatimento = async function(transacaoId) {
     Restante: <strong>${fmt(valorRestante)}</strong>
   `;
 
-  // Carrega histórico de abatimentos
+
   await carregarHistoricoAbatimentos(transacaoId);
 
   el.modalAbatimento.classList.remove('modal-overlay--escondida');
@@ -412,13 +381,13 @@ window.confirmarAbatimento = async function() {
   const { uid }    = estado.usuarioAtual;
   const novoRestante = +(valorRestante - valorAbater).toFixed(2);
 
-  // Salva abatimento no histórico
+
   await addDoc(
     colAbatimentos(uid, estado.mesAtualId, transacao.id),
     { valor: valorAbater, descricao: descricaoAb, criadoEm: new Date().toISOString() }
   );
 
-  // Atualiza valorRestante na transação
+
   await updateDoc(
     doc(db, 'usuarios', uid, 'meses', estado.mesAtualId, 'transacoes', transacao.id),
     { valorRestante: novoRestante }
@@ -427,9 +396,7 @@ window.confirmarAbatimento = async function() {
   fecharModalAbatimento();
 };
 
-/* ============================================================
-   10. RENDERIZAÇÃO DOS LANÇAMENTOS
-   ============================================================ */
+
 function renderizarLancamentos() {
   renderizarLista();
   atualizarResumo();
@@ -486,9 +453,7 @@ function atualizarResumo() {
   el.cardSaldo.classList.toggle('saldo-negativo', saldo < 0);
 }
 
-/* ============================================================
-   11. INICIALIZAÇÃO — observa autenticação
-   ============================================================ */
+
 onAuthStateChanged(auth, (usuario) => {
   if (usuario) {
     estado.usuarioAtual = usuario;

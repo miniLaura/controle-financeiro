@@ -1,6 +1,3 @@
-/* ============================================================
-   DESIGN SYSTEM
-   ============================================================ */
 :root {
   --cor-fundo:         #0f1117;
   --cor-superficie:    #1a1d27;
@@ -35,15 +32,10 @@ body { font-family: var(--fonte-principal); background-color: var(--cor-fundo); 
 ul { list-style: none; }
 input, button { font-family: inherit; }
 
-/* ============================================================
-   TELAS
-   ============================================================ */
+
 .tela { min-height: 100vh; display: flex; flex-direction: column; }
 .tela--escondida { display: none !important; }
 
-/* ============================================================
-   AUTH
-   ============================================================ */
 #tela-auth { align-items: center; justify-content: center; padding: var(--espaco-md); }
 .auth-card { background: var(--cor-superficie); border: 1px solid var(--cor-borda); border-radius: var(--raio-lg); padding: var(--espaco-xl) var(--espaco-lg); width: 100%; max-width: 420px; box-shadow: var(--sombra-card); }
 .auth-logo { text-align: center; margin-bottom: var(--espaco-lg); }
@@ -57,9 +49,7 @@ input, button { font-family: inherit; }
 .auth-form--escondido { display: none; }
 .auth-erro { color: var(--cor-saida); font-size: 0.8rem; min-height: 1rem; text-align: center; }
 
-/* ============================================================
-   CABEÇALHO
-   ============================================================ */
+
 .cabecalho { background: var(--cor-superficie); border-bottom: 1px solid var(--cor-borda); padding: var(--espaco-md) var(--espaco-lg); position: sticky; top: 0; z-index: 100; }
 .cabecalho__conteudo { max-width: 860px; margin: 0 auto; display: flex; align-items: center; gap: var(--espaco-sm); }
 .cabecalho__logo { display: flex; align-items: center; gap: var(--espaco-xs); }
@@ -73,14 +63,9 @@ input, button { font-family: inherit; }
 .botao-voltar { background: none; border: 1px solid var(--cor-borda); border-radius: var(--raio-sm); padding: 6px 14px; color: var(--cor-texto-suave); font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
 .botao-voltar:hover { border-color: var(--cor-acento); color: var(--cor-acento); }
 
-/* ============================================================
-   PRINCIPAL
-   ============================================================ */
 .principal { flex: 1; max-width: 860px; width: 100%; margin: 0 auto; padding: var(--espaco-lg); display: flex; flex-direction: column; gap: var(--espaco-lg); }
 
-/* ============================================================
-   CARDS RESUMO
-   ============================================================ */
+
 .resumo { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--espaco-md); }
 .card { background: var(--cor-superficie); border: 1px solid var(--cor-borda); border-radius: var(--raio-md); padding: var(--espaco-md); display: flex; flex-direction: column; gap: 6px; box-shadow: var(--sombra-card); transition: transform 0.2s; }
 .card:hover { transform: translateY(-2px); }
@@ -95,16 +80,11 @@ input, button { font-family: inherit; }
 .card--saldo.saldo-negativo { border-top-color: var(--cor-saida); box-shadow: var(--sombra-card), 0 0 20px rgba(255,92,122,.15); }
 .card--saldo.saldo-negativo .card__valor { color: var(--cor-saida); }
 
-/* ============================================================
-   SEÇÕES
-   ============================================================ */
+
 .secao__titulo { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--cor-texto-suave); margin-bottom: var(--espaco-md); display: flex; align-items: center; gap: var(--espaco-sm); }
 .secao__titulo::after { content: ''; flex: 1; height: 1px; background: var(--cor-borda); }
 .secao-formulario { background: var(--cor-superficie); border: 1px solid var(--cor-borda); border-radius: var(--raio-lg); padding: var(--espaco-lg); box-shadow: var(--sombra-card); }
 
-/* ============================================================
-   FORMULÁRIO
-   ============================================================ */
 .formulario { display: grid; gap: var(--espaco-md); }
 .formulario--inline { display: flex; align-items: flex-end; gap: var(--espaco-md); }
 .formulario__grupo { display: flex; flex-direction: column; gap: var(--espaco-xs); }
@@ -120,9 +100,7 @@ input, button { font-family: inherit; }
 .tipo-opcao--entrada:has(input:checked) { background: var(--cor-entrada-suave); border-color: var(--cor-entrada); color: var(--cor-entrada); }
 .tipo-opcao--saida:has(input:checked) { background: var(--cor-saida-suave); border-color: var(--cor-saida); color: var(--cor-saida); }
 
-/* ============================================================
-   BOTÕES
-   ============================================================ */
+
 .botao-primario { background: var(--cor-acento); color: #0f1117; border: none; border-radius: var(--raio-sm); padding: var(--espaco-sm) var(--espaco-md); font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s, transform 0.15s; width: 100%; }
 .botao-primario:hover { opacity: 0.9; transform: translateY(-1px); }
 .botao-primario:active { transform: translateY(0); }
@@ -131,9 +109,7 @@ input, button { font-family: inherit; }
 .botao-secundario { background: none; border: 1px solid var(--cor-borda); color: var(--cor-texto-suave); border-radius: var(--raio-sm); padding: var(--espaco-sm) var(--espaco-md); font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
 .botao-secundario:hover { border-color: var(--cor-texto-suave); color: var(--cor-texto); }
 
-/* ============================================================
-   GRID DE MESES
-   ============================================================ */
+
 .grid-meses { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--espaco-md); }
 
 .card-mes { background: var(--cor-superficie); border: 1px solid var(--cor-borda); border-radius: var(--raio-md); padding: var(--espaco-md); cursor: pointer; transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s; display: flex; flex-direction: column; gap: var(--espaco-sm); border-top: 3px solid var(--cor-borda); position: relative; }
@@ -161,9 +137,6 @@ input, button { font-family: inherit; }
 .card-mes:hover .card-mes__remover { opacity: 1; }
 .card-mes__remover:hover { color: var(--cor-saida); }
 
-/* ============================================================
-   LISTA DE TRANSAÇÕES
-   ============================================================ */
 .lista-transacoes { display: flex; flex-direction: column; gap: var(--espaco-sm); }
 .lista-transacoes__vazia { text-align: center; color: var(--cor-texto-suave); font-size: 0.9rem; padding: var(--espaco-xl); border: 1px dashed var(--cor-borda); border-radius: var(--raio-md); }
 
@@ -183,9 +156,7 @@ input, button { font-family: inherit; }
 .transacao__btn--abater:hover { color: var(--cor-alerta); background: var(--cor-alerta-suave); border-color: var(--cor-alerta); }
 .transacao__btn--remover:hover { color: var(--cor-saida); background: var(--cor-saida-suave); border-color: var(--cor-saida); }
 
-/* ============================================================
-   MODAL
-   ============================================================ */
+
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 200; padding: var(--espaco-md); backdrop-filter: blur(4px); }
 .modal-overlay--escondida { display: none !important; }
 .modal { background: var(--cor-superficie); border: 1px solid var(--cor-borda); border-radius: var(--raio-lg); width: 100%; max-width: 460px; box-shadow: 0 8px 40px rgba(0,0,0,0.5); }
@@ -203,9 +174,7 @@ input, button { font-family: inherit; }
 .historico-item span:last-child { color: var(--cor-alerta); font-weight: 600; }
 .historico-titulo { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--cor-texto-suave); }
 
-/* ============================================================
-   RODAPÉ + ANIMAÇÕES + RESPONSIVO
-   ============================================================ */
+
 .rodape { text-align: center; padding: var(--espaco-lg); font-size: 0.75rem; color: var(--cor-texto-suave); border-top: 1px solid var(--cor-borda); margin-top: auto; }
 
 @keyframes entrada-item { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
