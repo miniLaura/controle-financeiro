@@ -18,11 +18,13 @@ Aplicação web para controle de finanças pessoais com autenticação e armazen
 
 ## 🌐 Acesse o projeto
 
-👉 [Link do projeto aqui]
+👉 (https://minilaura.github.io/controle-financeiro/?)
 
 ## 📸 Preview
 
-(colocar prints aqui)
+<img width="1268" height="617" alt="image" src="https://github.com/user-attachments/assets/13b279ab-db54-4709-aa49-682b1fc28a80" />
+<img width="1165" height="628" alt="{1C863F35-69B4-4E2E-98F9-231D07757938}" src="https://github.com/user-attachments/assets/300aba3c-cd1c-4b38-afcc-281736d87d38" />
+
 
 ## 📚 Aprendizados
 
