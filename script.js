@@ -1,3 +1,4 @@
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
@@ -26,24 +27,23 @@ const auth = getAuth(app);
 const db   = getFirestore(app);
 
 
-const MESES_POR_PAGINA = 13;
+const MESES_POR_PAGINA = 10;
 
 const estado = {
   usuarioAtual:        null,
   mesAtualId:          null,
   mesAtualNome:        null,
   transacoes:          [],
+  mesesCarregados:     [],   
   ultimoDocMes:        null,
+  totalMesesCarregados: 0,
 
   unsubTransacoes:     null,
   unsubMeses:          null,
-  unsubListenersMeses: {},  
-
+  unsubListenersMeses: {},   
   transacaoAbatendo:   null,
-
-  mesesDisponiveis:    [], 
+  mesesDisponiveis:    [],   
 };
-
 
 const el = {
   telaAuth:        document.getElementById('tela-auth'),
@@ -79,7 +79,6 @@ const el = {
   descAbatimento:  document.getElementById('descricao-abatimento'),
   erroAbatimento:  document.getElementById('erro-abatimento'),
   modalHistorico:  document.getElementById('modal-historico'),
-  // Multi-mês
   btnMultiMes:     document.getElementById('btn-multi-mes'),
   modalMultiMes:   document.getElementById('modal-multi-mes'),
   listaMultiMes:   document.getElementById('lista-multi-mes'),
@@ -182,6 +181,19 @@ const colAbatimentos = (uid, mesId, transacaoId) => collection(db, 'usuarios', u
 const docMes         = (uid, mesId)              => doc(db, 'usuarios', uid, 'meses', mesId);
 
 
+async function migrarMesesSemTimestamp(uid, docs) {
+  const semTimestamp = docs.filter(d => !d.data().ultimaEdicao);
+  if (semTimestamp.length === 0) return;
+  await Promise.all(
+    semTimestamp.map(d =>
+      updateDoc(doc(db, 'usuarios', uid, 'meses', d.id), {
+        ultimaEdicao: serverTimestamp(),
+      })
+    )
+  );
+}
+
+
 function escutarMeses(uid) {
   if (estado.unsubMeses) estado.unsubMeses();
 
@@ -189,23 +201,23 @@ function escutarMeses(uid) {
   estado.ultimoDocMes         = null;
   estado.totalMesesCarregados = 0;
 
+  getDocs(colMeses(uid)).then(async (snapTodos) => {
+    await migrarMesesSemTimestamp(uid, snapTodos.docs);
 
-  const q = query(
-    colMeses(uid),
-    orderBy('ultimaEdicao', 'desc'),
-    limit(MESES_POR_PAGINA)
-  );
+    const q = query(
+      colMeses(uid),
+      orderBy('ultimaEdicao', 'desc'),
+      limit(MESES_POR_PAGINA)
+    );
 
-  estado.unsubMeses = onSnapshot(q, (snapshot) => {
+    estado.unsubMeses = onSnapshot(q, (snapshot) => {
+      estado.mesesCarregados  = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      estado.ultimoDocMes     = snapshot.docs[snapshot.docs.length - 1] || null;
+      estado.mesesDisponiveis = [...estado.mesesCarregados];
 
-    estado.mesesCarregados = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    estado.ultimoDocMes    = snapshot.docs[snapshot.docs.length - 1] || null;
-
-
-    estado.mesesDisponiveis = [...estado.mesesCarregados];
-
-    renderizarGridMeses();
-    atualizarBotaoVerMais(snapshot.docs.length);
+      renderizarGridMeses();
+      atualizarBotaoVerMais(snapshot.docs.length);
+    });
   });
 }
 
@@ -235,12 +247,12 @@ window.carregarMaisMeses = async function() {
 };
 
 function atualizarBotaoVerMais(qtdRetornada) {
+
   el.btnVerMais.style.display = qtdRetornada >= MESES_POR_PAGINA ? 'block' : 'none';
 }
 
 
-const cacheTotais = {};
-
+const cacheTotais = {}; 
 
 function escutarTotaisMes(uid, mesId) {
   if (estado.unsubListenersMeses[mesId]) return;
@@ -256,6 +268,7 @@ function escutarTotaisMes(uid, mesId) {
       else                      saidas   += v;
     });
     cacheTotais[mesId] = { entradas, saidas, saldo: entradas - saidas };
+
 
     atualizarCardMes(mesId);
   });
@@ -324,7 +337,7 @@ function renderizarGridMeses() {
   el.gridMeses.innerHTML = estado.mesesCarregados
     .map(mes => {
       const totais = cacheTotais[mes.id] || { entradas: 0, saidas: 0, saldo: 0 };
-      escutarTotaisMes(uid, mes.id); 
+      escutarTotaisMes(uid, mes.id); // ativa listener se ainda não existe
       return htmlCardMes(mes, totais);
     })
     .join('');
@@ -393,6 +406,7 @@ async function salvarTransacaoNoMes(uid, mesId, dados) {
     ...dados,
     criadoEm: new Date().toISOString(),
   });
+
   await updateDoc(docMes(uid, mesId), { ultimaEdicao: serverTimestamp() });
 }
 
@@ -436,7 +450,9 @@ window.abrirModalMultiMes = function() {
   el.erroMultiMes.textContent  = '';
   el.descMultiMes.value        = '';
   el.valorMultiMes.value       = '';
+
   document.querySelectorAll('input[name="tipo-multi"]').forEach(r => r.checked = false);
+
 
   if (estado.mesesDisponiveis.length === 0) {
     el.listaMultiMes.innerHTML = '<p style="color:var(--cor-texto-suave);font-size:.85rem">Nenhum mês disponível.</p>';
@@ -608,7 +624,6 @@ function atualizarResumo() {
   el.saldoTotal.textContent    = fmt(saldo);
   el.cardSaldo.classList.toggle('saldo-negativo', saldo < 0);
 }
-
 
 onAuthStateChanged(auth, (usuario) => {
   if (usuario) {
