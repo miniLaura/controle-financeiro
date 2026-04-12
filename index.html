@@ -53,7 +53,6 @@
       </div>
     </div>
 
-
     <div class="tela tela--escondida" id="tela-meses">
       <header class="cabecalho">
         <div class="cabecalho__conteudo">
@@ -69,7 +68,6 @@
         </div>
       </header>
       <main class="principal">
-
         <section class="secao-formulario">
           <h2 class="secao__titulo">Novo Mês</h2>
           <form class="formulario formulario--inline" id="form-novo-mes" novalidate>
@@ -80,23 +78,18 @@
             <button class="botao-primario botao-primario--sm" type="submit">+ Criar mês</button>
           </form>
         </section>
-
         <section class="secao-lista">
           <h2 class="secao__titulo">Seus Meses</h2>
           <div class="grid-meses" id="grid-meses">
             <p class="lista-transacoes__vazia">Nenhum mês criado ainda. Crie um acima. ✦</p>
           </div>
           <div class="ver-mais-wrap">
-            <button class="botao-ver-mais" id="btn-ver-mais" onclick="carregarMaisMeses()" style="display:none">
-              Ver mais meses ↓
-            </button>
+            <button class="botao-ver-mais" id="btn-ver-mais" onclick="carregarMaisMeses()" style="display:none">Ver mais meses ↓</button>
           </div>
         </section>
-
       </main>
       <footer class="rodape"><p>by Laura — tentando não falir desde 2024 💅</p></footer>
     </div>
-
 
     <div class="tela tela--escondida" id="tela-lancamentos">
       <header class="cabecalho">
@@ -113,7 +106,6 @@
         </div>
       </header>
       <main class="principal">
-
         <section class="resumo">
           <div class="card card--saldo" id="card-saldo">
             <span class="card__rotulo">Saldo Total</span>
@@ -128,7 +120,6 @@
             <strong class="card__valor" id="total-saidas">R$ 0,00</strong>
           </div>
         </section>
-
         <section class="secao-formulario">
           <h2 class="secao__titulo">Nova Transação</h2>
           <form class="formulario" id="formulario-transacao" novalidate>
@@ -155,24 +146,56 @@
             </div>
             <div class="formulario__botoes">
               <button class="botao-primario" type="submit" id="btn-adicionar">Adicionar Transação</button>
-              <button class="botao-secundario" type="button" id="btn-multi-mes" onclick="abrirModalMultiMes()">
-                ⊕ Lançar em vários meses
-              </button>
+              <button class="botao-secundario" type="button" onclick="abrirModalMultiMes()">⊕ Lançar em vários meses</button>
             </div>
           </form>
         </section>
-
         <section class="secao-lista">
           <h2 class="secao__titulo">Histórico</h2>
           <ul class="lista-transacoes" id="lista-transacoes">
             <li class="lista-transacoes__vazia">Nenhuma transação ainda. ✦</li>
           </ul>
         </section>
-
       </main>
       <footer class="rodape"><p>by Laura — tentando não falir desde 2024 💅</p></footer>
     </div>
 
+    <div class="modal-overlay modal-overlay--escondida" id="modal-edicao">
+      <div class="modal">
+        <div class="modal__header">
+          <h3 class="modal__titulo">Editar Transação</h3>
+          <button class="modal__fechar" onclick="fecharModalEdicao()">✕</button>
+        </div>
+        <div class="modal__body">
+          <div class="formulario__grupo">
+            <label class="formulario__label" for="edit-descricao">Descrição</label>
+            <input class="formulario__input" type="text" id="edit-descricao" placeholder="Descrição da transação" autocomplete="off" />
+          </div>
+          <div class="formulario__grupo">
+            <label class="formulario__label" for="edit-valor">Valor (R$)</label>
+            <input class="formulario__input" type="number" id="edit-valor" placeholder="0,00" step="0.01" min="0.01" />
+          </div>
+          <div class="formulario__grupo">
+            <label class="formulario__label">Tipo</label>
+            <div class="formulario__tipo">
+              <label class="tipo-opcao tipo-opcao--entrada">
+                <input type="radio" name="tipo-edit" value="entrada" />
+                <span>↑ Entrada</span>
+              </label>
+              <label class="tipo-opcao tipo-opcao--saida">
+                <input type="radio" name="tipo-edit" value="saida" />
+                <span>↓ Saída</span>
+              </label>
+            </div>
+          </div>
+          <p class="auth-erro" id="erro-edicao"></p>
+        </div>
+        <div class="modal__footer">
+          <button class="botao-secundario" onclick="fecharModalEdicao()">Cancelar</button>
+          <button class="botao-primario" onclick="confirmarEdicao()" id="btn-confirmar-edicao">Salvar alterações</button>
+        </div>
+      </div>
+    </div>
 
     <div class="modal-overlay modal-overlay--escondida" id="modal-abatimento">
       <div class="modal">
@@ -199,7 +222,6 @@
         </div>
       </div>
     </div>
-
 
     <div class="modal-overlay modal-overlay--escondida" id="modal-multi-mes">
       <div class="modal modal--largo">
