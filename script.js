@@ -39,6 +39,8 @@ const estado = {
   unsubListenersMeses:  {},
   transacaoAbatendo:    null,
   transacaoEditando:    null,
+  logsPagina:           [],
+  logsUnsubscribe:      null,
   mesesDisponiveis:     [],
 };
 
@@ -85,6 +87,8 @@ const el = {
   editDescricao:   document.getElementById('edit-descricao'),
   editValor:       document.getElementById('edit-valor'),
   erroEdicao:      document.getElementById('erro-edicao'),
+  modalHistoricoAtiv: document.getElementById('modal-historico-atividades'),
+  listaLogs:          document.getElementById('lista-logs'),
 };
 
 function fmt(valor) {
@@ -174,7 +178,19 @@ function cancelarTodosListeners() {
 const colMeses       = (uid)                     => collection(db, 'usuarios', uid, 'meses');
 const colTransacoes  = (uid, mesId)              => collection(db, 'usuarios', uid, 'meses', mesId, 'transacoes');
 const colAbatimentos = (uid, mesId, transacaoId) => collection(db, 'usuarios', uid, 'meses', mesId, 'transacoes', transacaoId, 'abatimentos');
+const colLogs        = (uid, mesId)              => collection(db, 'usuarios', uid, 'meses', mesId, 'logs');
 const docMes         = (uid, mesId)              => doc(db, 'usuarios', uid, 'meses', mesId);
+
+
+async function registrarLog(uid, mesId, acao, dados) {
+  await addDoc(colLogs(uid, mesId), {
+    acao,
+    descricao: dados.descricao || '',
+    valor:     dados.valor     || null,
+    extra:     dados.extra     || null,
+    criadoEm: new Date().toISOString(),
+  });
+}
 
 async function migrarMesesSemTimestamp(uid, docs) {
   const semTimestamp = docs.filter(d => !d.data().ultimaEdicao);
@@ -352,6 +368,7 @@ function escutarTransacoes() {
 async function salvarTransacaoNoMes(uid, mesId, dados) {
   await addDoc(colTransacoes(uid, mesId), { ...dados, criadoEm: new Date().toISOString() });
   await updateDoc(docMes(uid, mesId), { ultimaEdicao: serverTimestamp() });
+  await registrarLog(uid, mesId, 'adicionou', { descricao: dados.descricao, valor: dados.valor });
 }
 
 el.formTransacao.addEventListener('submit', async (e) => {
@@ -371,8 +388,10 @@ el.formTransacao.addEventListener('submit', async (e) => {
 window.removerTransacao = async function(id) {
   if (!confirm('Remover esta transação?')) return;
   const { uid } = estado.usuarioAtual;
+  const transacao = estado.transacoes.find(t => t.id === id);
   await deleteDoc(doc(db, 'usuarios', uid, 'meses', estado.mesAtualId, 'transacoes', id));
   await updateDoc(docMes(uid, estado.mesAtualId), { ultimaEdicao: serverTimestamp() });
+  if (transacao) await registrarLog(uid, estado.mesAtualId, 'removeu', { descricao: transacao.descricao, valor: transacao.valor });
 };
 
 window.abrirModalEdicao = function(transacaoId) {
@@ -410,6 +429,7 @@ window.confirmarEdicao = async function() {
     descricao: novaDesc, valor: novoValor, valorRestante: novoRestante, tipo: novoTipo,
   });
   await updateDoc(docMes(uid, estado.mesAtualId), { ultimaEdicao: serverTimestamp() });
+  await registrarLog(uid, estado.mesAtualId, 'editou', { descricao: novaDesc, valor: novoValor, extra: `era: ${transacao.descricao} / R$${transacao.valor}` });
   btn.disabled = false; btn.textContent = 'Salvar alterações';
   fecharModalEdicao();
 };
@@ -496,6 +516,7 @@ window.confirmarAbatimento = async function() {
   await addDoc(colAbatimentos(uid, estado.mesAtualId, transacao.id), { valor: valorAbater, descricao: descricaoAb, criadoEm: new Date().toISOString() });
   await updateDoc(doc(db, 'usuarios', uid, 'meses', estado.mesAtualId, 'transacoes', transacao.id), { valorRestante: novoRestante });
   await updateDoc(docMes(uid, estado.mesAtualId), { ultimaEdicao: serverTimestamp() });
+  await registrarLog(uid, estado.mesAtualId, 'abateu', { descricao: transacao.descricao, valor: valorAbater });
   fecharModalAbatimento();
 };
 
@@ -539,6 +560,42 @@ function atualizarResumo() {
   el.saldoTotal.textContent    = fmt(saldo);
   el.cardSaldo.classList.toggle('saldo-negativo', saldo < 0);
 }
+
+window.abrirHistoricoAtividades = async function() {
+  el.modalHistoricoAtiv.classList.remove('modal-overlay--escondida');
+  el.listaLogs.innerHTML = '<p style="color:var(--cor-texto-suave);font-size:.85rem;text-align:center;padding:1rem">Carregando...</p>';
+  const { uid } = estado.usuarioAtual;
+  const q = query(colLogs(uid, estado.mesAtualId), orderBy('criadoEm', 'desc'));
+  const snap = await getDocs(q);
+  if (snap.empty) {
+    el.listaLogs.innerHTML = '<p style="color:var(--cor-texto-suave);font-size:.85rem;text-align:center;padding:1rem">Nenhuma atividade registrada ainda.</p>';
+    return;
+  }
+  const icones = { adicionou: '＋', removeu: '✕', editou: '✎', abateu: '⊖' };
+  const cores  = { adicionou: 'var(--cor-entrada)', removeu: 'var(--cor-saida)', editou: 'var(--cor-acento)', abateu: 'var(--cor-alerta)' };
+  el.listaLogs.innerHTML = snap.docs.map(d => {
+    const log  = d.data();
+    const data = new Date(log.criadoEm);
+    const dataFmt = data.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+    const horaFmt = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const icone = icones[log.acao] || '●';
+    const cor   = cores[log.acao]  || 'var(--cor-texto-suave)';
+    return `
+      <div class="log-item">
+        <span class="log-item__icone" style="color:${cor}">${icone}</span>
+        <div class="log-item__info">
+          <span class="log-item__acao">${log.acao.charAt(0).toUpperCase() + log.acao.slice(1)} <strong>${log.descricao}</strong>${log.valor ? ` — ${fmt(log.valor)}` : ''}</span>
+          ${log.extra ? `<span class="log-item__extra">${log.extra}</span>` : ''}
+          <span class="log-item__data">${dataFmt} às ${horaFmt}</span>
+        </div>
+      </div>`;
+  }).join('');
+};
+
+window.fecharHistoricoAtividades = function() {
+  el.modalHistoricoAtiv.classList.add('modal-overlay--escondida');
+};
+
 
 onAuthStateChanged(auth, (usuario) => {
   if (usuario) {
