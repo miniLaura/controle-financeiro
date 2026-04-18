@@ -452,6 +452,7 @@ window.abrirModalMultiMes = function() {
 window.fecharModalMultiMes = function() {
   el.modalMultiMes.classList.add('modal-overlay--escondida');
 };
+
 window.confirmarMultiMes = async function() {
   el.erroMultiMes.textContent = '';
   const descricao  = el.descMultiMes.value.trim();
