@@ -151,7 +151,10 @@
           </form>
         </section>
         <section class="secao-lista">
+          <div class="secao__titulo-wrap">
           <h2 class="secao__titulo">Histórico</h2>
+          <button class="botao-historico" onclick="abrirHistoricoAtividades()">⊙ Ver atividades</button>
+        </div>
           <ul class="lista-transacoes" id="lista-transacoes">
             <li class="lista-transacoes__vazia">Nenhuma transação ainda. ✦</li>
           </ul>
@@ -263,6 +266,22 @@
         </div>
       </div>
     </div>
+
+    <div class="modal-overlay modal-overlay--escondida" id="modal-historico-atividades">
+      <div class="modal modal--largo">
+        <div class="modal__header">
+          <h3 class="modal__titulo">⊙ Histórico de Atividades</h3>
+          <button class="modal__fechar" onclick="fecharHistoricoAtividades()">✕</button>
+        </div>
+        <div class="modal__body modal__body--logs">
+          <div class="lista-logs" id="lista-logs"></div>
+        </div>
+        <div class="modal__footer">
+          <button class="botao-primario" onclick="fecharHistoricoAtividades()">Fechar</button>
+        </div>
+      </div>
+    </div>
+
 
     <script type="module" src="script.js"></script>
   </body>
