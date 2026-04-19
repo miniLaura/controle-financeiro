@@ -78,6 +78,13 @@
             <button class="botao-primario botao-primario--sm" type="submit">+ Criar mês</button>
           </form>
         </section>
+        <section class="secao-filtros">
+          <button class="filtro-btn filtro-btn--ativo" data-filtro="todos" onclick="aplicarFiltro('todos')">Todos</button>
+          <button class="filtro-btn filtro-btn--positivo" data-filtro="positivo" onclick="aplicarFiltro('positivo')">● Positivos</button>
+          <button class="filtro-btn filtro-btn--critico" data-filtro="critico" onclick="aplicarFiltro('critico')">● Negativos</button>
+          <button class="filtro-btn filtro-btn--entrada" data-filtro="comEntrada" onclick="aplicarFiltro('comEntrada')">↑ Com entradas</button>
+          <button class="filtro-btn filtro-btn--saida" data-filtro="maisSaida" onclick="aplicarFiltro('maisSaida')">↓ Mais saídas</button>
+        </section>
         <section class="secao-lista">
           <h2 class="secao__titulo">Seus Meses</h2>
           <div class="grid-meses" id="grid-meses">
@@ -151,10 +158,7 @@
           </form>
         </section>
         <section class="secao-lista">
-          <div class="secao__titulo-wrap">
           <h2 class="secao__titulo">Histórico</h2>
-          <button class="botao-historico" onclick="abrirHistoricoAtividades()">⊙ Ver atividades</button>
-        </div>
           <ul class="lista-transacoes" id="lista-transacoes">
             <li class="lista-transacoes__vazia">Nenhuma transação ainda. ✦</li>
           </ul>
@@ -266,22 +270,6 @@
         </div>
       </div>
     </div>
-
-    <div class="modal-overlay modal-overlay--escondida" id="modal-historico-atividades">
-      <div class="modal modal--largo">
-        <div class="modal__header">
-          <h3 class="modal__titulo">⊙ Histórico de Atividades</h3>
-          <button class="modal__fechar" onclick="fecharHistoricoAtividades()">✕</button>
-        </div>
-        <div class="modal__body modal__body--logs">
-          <div class="lista-logs" id="lista-logs"></div>
-        </div>
-        <div class="modal__footer">
-          <button class="botao-primario" onclick="fecharHistoricoAtividades()">Fechar</button>
-        </div>
-      </div>
-    </div>
-
 
     <script type="module" src="script.js"></script>
   </body>
