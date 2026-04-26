@@ -712,6 +712,7 @@ function renderizarIndicador() {
     </div>`;
 }
 
+
 window.abrirModalMeta = function() {
   const modal = document.getElementById('modal-meta');
   const input = document.getElementById('input-meta-renda');
