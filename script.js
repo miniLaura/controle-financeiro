@@ -41,6 +41,7 @@ const estado = {
   transacaoEditando:    null,
   mesesDisponiveis:     [],
   filtroAtivo:          'todos',
+  metaMes:              null,
   transacaoEditando:    null,
   transacaoAbatendo:    null,
   logsPagina:           [],
@@ -391,6 +392,7 @@ function escutarTransacoes() {
     estado.transacoes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderizarLancamentos();
   });
+  carregarMetaMes(uid, mesId).then(renderizarIndicador);
 }
 
 async function salvarTransacaoNoMes(uid, mesId, dados) {
@@ -551,6 +553,7 @@ window.confirmarAbatimento = async function() {
 function renderizarLancamentos() {
   renderizarLista();
   atualizarResumo();
+  renderizarIndicador();
 }
 
 function renderizarLista() {
@@ -622,6 +625,119 @@ window.abrirHistoricoAtividades = async function() {
 
 window.fecharHistoricoAtividades = function() {
   el.modalHistoricoAtiv.classList.add('modal-overlay--escondida');
+};
+
+
+async function carregarMetaMes(uid, mesId) {
+  const snap = await getDocs(query(collection(db, 'usuarios', uid, 'meses', mesId, 'config')));
+  if (!snap.empty) {
+    const cfg = snap.docs[0].data();
+    estado.metaMes = cfg.metaRenda || null;
+  } else {
+    estado.metaMes = null;
+  }
+}
+
+async function salvarMetaMes(uid, mesId, valor) {
+  const colConfig = collection(db, 'usuarios', uid, 'meses', mesId, 'config');
+  const snap = await getDocs(colConfig);
+  if (!snap.empty) {
+    await updateDoc(doc(db, 'usuarios', uid, 'meses', mesId, 'config', snap.docs[0].id), { metaRenda: valor });
+  } else {
+    await addDoc(colConfig, { metaRenda: valor });
+  }
+  estado.metaMes = valor;
+  renderizarIndicador();
+}
+
+function renderizarIndicador() {
+  const painel = document.getElementById('painel-5030-20');
+  if (!painel) return;
+
+  const entradas = estado.transacoes.filter(t => t.tipo === 'entrada').reduce((a, t) => a + (t.valorRestante !== undefined ? t.valorRestante : t.valor), 0);
+  const saidas   = estado.transacoes.filter(t => t.tipo === 'saida').reduce((a, t) => a + (t.valorRestante !== undefined ? t.valorRestante : t.valor), 0);
+  const base     = estado.metaMes || entradas || 0;
+
+  if (base === 0) {
+    painel.innerHTML = `
+      <div class="indicador-vazio">
+        <span>Configure sua renda de referência para ver o indicador 50-30-20</span>
+        <button class="botao-configurar-meta" onclick="abrirModalMeta()">Configurar</button>
+      </div>`;
+    return;
+  }
+
+  const pNecessidades = Math.min(100, +((saidas / base) * 100).toFixed(1));
+  const pSaldo        = Math.max(0,  +((( base - saidas) / base) * 100).toFixed(1));
+
+  const meta50 = base * 0.5;
+  const meta20 = base * 0.2;
+  const sobra  = base - saidas;
+  const poupanca = sobra > 0 ? sobra : 0;
+
+  const statusSaidas   = saidas   > meta50  ? 'critico'  : saidas > base * 0.4 ? 'atencao' : 'positivo';
+  const statusPoupanca = poupanca >= meta20  ? 'positivo' : poupanca > 0 ? 'atencao' : 'critico';
+
+  const cores = { positivo: 'var(--cor-entrada)', atencao: 'var(--cor-alerta)', critico: 'var(--cor-saida)' };
+
+  painel.innerHTML = `
+    <div class="indicador-header">
+      <span class="indicador-titulo">Regra 50-30-20</span>
+      <button class="botao-configurar-meta" onclick="abrirModalMeta()" title="Configurar renda de referência">⚙ ${estado.metaMes ? fmt(estado.metaMes) : 'Configurar'}</button>
+    </div>
+    <div class="indicador-barra-wrap">
+      <div class="indicador-barra-label">
+        <span>Gastos</span>
+        <span style="color:${cores[statusSaidas]}">${fmt(saidas)} <small>(${pNecessidades}% / meta 50%)</small></span>
+      </div>
+      <div class="indicador-barra">
+        <div class="indicador-barra__fill indicador-barra__fill--${statusSaidas}" style="width:${Math.min(pNecessidades, 100)}%"></div>
+        <div class="indicador-barra__meta" style="left:50%"></div>
+      </div>
+    </div>
+    <div class="indicador-barra-wrap">
+      <div class="indicador-barra-label">
+        <span>Disponível / Poupança</span>
+        <span style="color:${cores[statusPoupanca]}">${fmt(poupanca)} <small>(${pSaldo}% / meta 20%)</small></span>
+      </div>
+      <div class="indicador-barra">
+        <div class="indicador-barra__fill indicador-barra__fill--${statusPoupanca}" style="width:${Math.min(pSaldo, 100)}%"></div>
+        <div class="indicador-barra__meta" style="left:20%"></div>
+      </div>
+    </div>
+    <div class="indicador-resumo">
+      <span class="indicador-resumo__item indicador-resumo__item--${statusSaidas}">Gastos: ${pNecessidades}%</span>
+      <span class="indicador-resumo__item indicador-resumo__item--${statusPoupanca}">Sobra: ${pSaldo}%</span>
+      <span class="indicador-resumo__item ${poupanca >= meta20 ? 'indicador-resumo__item--positivo' : 'indicador-resumo__item--critico'}">Meta 20% atingida: ${poupanca >= meta20 ? 'Sim ✓' : 'Não ✗'}</span>
+    </div>`;
+}
+
+window.abrirModalMeta = function() {
+  const modal = document.getElementById('modal-meta');
+  const input = document.getElementById('input-meta-renda');
+  input.value = estado.metaMes || '';
+  document.getElementById('erro-meta').textContent = '';
+  modal.classList.remove('modal-overlay--escondida');
+  setTimeout(() => input.focus(), 50);
+};
+
+window.fecharModalMeta = function() {
+  document.getElementById('modal-meta').classList.add('modal-overlay--escondida');
+};
+
+window.salvarConfigMeta = async function() {
+  const input = document.getElementById('input-meta-renda');
+  const valor = parseFloat(input.value);
+  if (!valor || valor <= 0) {
+    document.getElementById('erro-meta').textContent = 'Informe um valor válido.';
+    return;
+  }
+  const btn = document.getElementById('btn-salvar-meta');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  const { uid } = estado.usuarioAtual;
+  await salvarMetaMes(uid, estado.mesAtualId, valor);
+  btn.disabled = false; btn.textContent = 'Salvar';
+  fecharModalMeta();
 };
 
 
