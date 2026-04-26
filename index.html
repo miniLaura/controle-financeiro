@@ -113,6 +113,9 @@
         </div>
       </header>
       <main class="principal">
+        <section class="secao-indicador" id="painel-5030-20">
+        </section>
+
         <section class="resumo">
           <div class="card card--saldo" id="card-saldo">
             <span class="card__rotulo">Saldo Total</span>
@@ -285,6 +288,28 @@
         </div>
         <div class="modal__footer">
           <button class="botao-primario" onclick="fecharHistoricoAtividades()">Fechar</button>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="modal-overlay modal-overlay--escondida" id="modal-meta">
+      <div class="modal">
+        <div class="modal__header">
+          <h3 class="modal__titulo">⚙ Renda de Referência</h3>
+          <button class="modal__fechar" onclick="fecharModalMeta()">✕</button>
+        </div>
+        <div class="modal__body">
+          <p class="modal__info">Defina sua renda mensal de referência para o cálculo da regra 50-30-20. O sistema vai comparar seus gastos com essa base.</p>
+          <div class="formulario__grupo">
+            <label class="formulario__label" for="input-meta-renda">Renda mensal (R$)</label>
+            <input class="formulario__input" type="number" id="input-meta-renda" placeholder="Ex: 3000,00" step="0.01" min="0.01" />
+          </div>
+          <p class="auth-erro" id="erro-meta"></p>
+        </div>
+        <div class="modal__footer">
+          <button class="botao-secundario" onclick="fecharModalMeta()">Cancelar</button>
+          <button class="botao-primario" onclick="salvarConfigMeta()" id="btn-salvar-meta">Salvar</button>
         </div>
       </div>
     </div>
