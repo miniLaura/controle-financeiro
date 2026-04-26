@@ -219,3 +219,29 @@ input, button { font-family: inherit; }
 .log-item__acao { font-size: 0.88rem; color: var(--cor-texto); }
 .log-item__extra { font-size: 0.75rem; color: var(--cor-texto-suave); }
 .log-item__data { font-size: 0.72rem; color: var(--cor-texto-suave); opacity: 0.7; }
+
+.secao-indicador { background: var(--cor-superficie); border: 1px solid var(--cor-borda); border-radius: var(--raio-lg); padding: var(--espaco-lg); box-shadow: var(--sombra-card); display: flex; flex-direction: column; gap: var(--espaco-md); }
+
+.indicador-header { display: flex; align-items: center; justify-content: space-between; }
+.indicador-titulo { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--cor-texto-suave); }
+.botao-configurar-meta { background: none; border: 1px solid var(--cor-borda); color: var(--cor-texto-suave); border-radius: var(--raio-sm); padding: 4px 12px; font-size: 0.75rem; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: var(--fonte-principal); }
+.botao-configurar-meta:hover { border-color: var(--cor-acento); color: var(--cor-acento); }
+
+.indicador-barra-wrap { display: flex; flex-direction: column; gap: 6px; }
+.indicador-barra-label { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--cor-texto-suave); }
+.indicador-barra-label small { font-size: 0.7rem; opacity: 0.8; }
+
+.indicador-barra { position: relative; height: 10px; background: var(--cor-superficie-2); border-radius: 20px; overflow: visible; }
+.indicador-barra__fill { height: 100%; border-radius: 20px; transition: width 0.5s ease; }
+.indicador-barra__fill--positivo { background: var(--cor-entrada); }
+.indicador-barra__fill--atencao  { background: var(--cor-alerta); }
+.indicador-barra__fill--critico  { background: var(--cor-saida); }
+.indicador-barra__meta { position: absolute; top: -3px; width: 2px; height: 16px; background: var(--cor-texto-suave); border-radius: 2px; opacity: 0.5; transform: translateX(-50%); }
+
+.indicador-resumo { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.indicador-resumo__item { font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+.indicador-resumo__item--positivo { background: var(--cor-entrada-suave); color: var(--cor-entrada); }
+.indicador-resumo__item--atencao  { background: var(--cor-alerta-suave);  color: var(--cor-alerta); }
+.indicador-resumo__item--critico  { background: var(--cor-saida-suave);   color: var(--cor-saida); }
+
+.indicador-vazio { display: flex; align-items: center; justify-content: space-between; gap: var(--espaco-md); font-size: 0.85rem; color: var(--cor-texto-suave); flex-wrap: wrap; }
