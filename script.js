@@ -740,7 +740,6 @@ window.salvarConfigMeta = async function() {
   fecharModalMeta();
 };
 
-
 onAuthStateChanged(auth, (usuario) => {
   if (usuario) {
     estado.usuarioAtual         = usuario;
